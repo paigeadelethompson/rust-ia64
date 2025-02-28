@@ -1,5 +1,5 @@
 //! Instruction bundle implementation
-//! 
+//!
 //! This module implements the IA-64 instruction bundle format and decoding.
 
 use crate::EmulatorError;
@@ -31,7 +31,9 @@ impl BundleTemplate {
             0b00011 => Ok(BundleTemplate::MMB),
             0b00100 => Ok(BundleTemplate::MFI),
             0b00101 => Ok(BundleTemplate::MFB),
-            _ => Err(EmulatorError::DecodeError("Invalid bundle template".to_string())),
+            _ => Err(EmulatorError::DecodeError(
+                "Invalid bundle template".to_string(),
+            )),
         }
     }
 }
@@ -69,11 +71,11 @@ impl Bundle {
         let template = BundleTemplate::from_bits(template_bits)?;
 
         let mut slots = [None; 3];
-        
+
         // Extract instruction slots (41 bits each)
         // Note: IA-64 uses little-endian byte order
         let slot_mask = (1u64 << 41) - 1;
-        slots[0] = Some((data >> 6) as u64 & slot_mask);  // Start at bit 6 (after template bits)
+        slots[0] = Some((data >> 6) as u64 & slot_mask); // Start at bit 6 (after template bits)
         slots[1] = Some((data >> 46) as u64 & slot_mask); // Start at bit 46
         slots[2] = Some((data >> 87) as u64 & slot_mask); // Start at bit 87
 
@@ -116,12 +118,30 @@ mod tests {
 
     #[test]
     fn test_bundle_template() {
-        assert_eq!(BundleTemplate::from_bits(0b00000).unwrap(), BundleTemplate::MII);
-        assert_eq!(BundleTemplate::from_bits(0b00001).unwrap(), BundleTemplate::MIB);
-        assert_eq!(BundleTemplate::from_bits(0b00010).unwrap(), BundleTemplate::MMI);
-        assert_eq!(BundleTemplate::from_bits(0b00011).unwrap(), BundleTemplate::MMB);
-        assert_eq!(BundleTemplate::from_bits(0b00100).unwrap(), BundleTemplate::MFI);
-        assert_eq!(BundleTemplate::from_bits(0b00101).unwrap(), BundleTemplate::MFB);
+        assert_eq!(
+            BundleTemplate::from_bits(0b00000).unwrap(),
+            BundleTemplate::MII
+        );
+        assert_eq!(
+            BundleTemplate::from_bits(0b00001).unwrap(),
+            BundleTemplate::MIB
+        );
+        assert_eq!(
+            BundleTemplate::from_bits(0b00010).unwrap(),
+            BundleTemplate::MMI
+        );
+        assert_eq!(
+            BundleTemplate::from_bits(0b00011).unwrap(),
+            BundleTemplate::MMB
+        );
+        assert_eq!(
+            BundleTemplate::from_bits(0b00100).unwrap(),
+            BundleTemplate::MFI
+        );
+        assert_eq!(
+            BundleTemplate::from_bits(0b00101).unwrap(),
+            BundleTemplate::MFB
+        );
         assert!(BundleTemplate::from_bits(0b11111).is_err());
     }
 
@@ -155,15 +175,15 @@ mod tests {
         // and each 41-bit slot filled with 1s
         let mut data = 0u128;
         let slot_mask = (1u128 << 41) - 1;
-        
+
         // Set up each 41-bit slot with all 1s
         // Note: We need to be careful not to overlap with the template bits
         // The template bits are at bits 1-5, so we need to ensure our slots
         // don't affect those bits
-        data |= slot_mask << 6;  // First slot (starts after template bits)
+        data |= slot_mask << 6; // First slot (starts after template bits)
         data |= slot_mask << 46; // Second slot
         data |= slot_mask << 87; // Third slot
-        
+
         let bundle = Bundle::new(data).unwrap();
 
         // Each slot should be 41 bits of all 1s
@@ -171,7 +191,7 @@ mod tests {
         assert_eq!(bundle.slots[0].unwrap(), expected);
         assert_eq!(bundle.slots[1].unwrap(), expected);
         assert_eq!(bundle.slots[2].unwrap(), expected);
-        
+
         // Verify that we got the correct template
         assert_eq!(bundle.template, BundleTemplate::MII);
     }
@@ -182,4 +202,4 @@ mod tests {
         let data = 0x1F_u128 << 1; // Set template bits to 0b11111
         assert!(Bundle::new(data).is_err());
     }
-} 
+}

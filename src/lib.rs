@@ -1,13 +1,13 @@
 //! Rust IA-64 Emulator
-//! 
+//!
 //! This library provides emulation of the Intel IA-64 (Itanium) architecture.
 //! It includes CPU state management, memory management, and instruction decoding/execution.
 
 #![deny(missing_docs)]
 
 pub mod cpu;
-pub mod memory;
 pub mod decoder;
+pub mod memory;
 
 use std::error::Error;
 use std::fmt;
@@ -60,4 +60,4 @@ impl fmt::Display for EmulatorError {
 impl Error for EmulatorError {}
 
 /// Result type for emulator operations
-pub type EmulatorResult<T> = Result<T, EmulatorError>; 
+pub type EmulatorResult<T> = Result<T, EmulatorError>;

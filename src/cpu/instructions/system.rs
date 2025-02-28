@@ -1,14 +1,13 @@
 //! System instruction implementations
-//! 
+//!
 //! This module implements system and privileged instructions for the IA-64 architecture.
 
-use super::{Instruction, InstructionFields, RegisterType};
+use super::{InstructionFields, RegisterType};
+use crate::cpu::registers::CRIndex;
 use crate::cpu::Cpu;
-use crate::cpu::registers::{CRFile, CRIndex};
 use crate::cpu::PSRFlags;
 use crate::decoder::instruction_format::{IFormat, MFormat};
 use crate::EmulatorError;
-use crate::memory::Memory;
 
 /// User mask bits in PSR
 const PSR_USER_MASK: u64 = 0x0000_0000_0000_004F; // UM (bit 0), BE (bit 3), PME (bit 6), IC (bit 13), I (bit 14)
@@ -29,7 +28,9 @@ impl MoveToPsr {
     pub fn execute(&self, cpu: &mut Cpu) -> Result<(), EmulatorError> {
         // Check if in privileged mode
         if !cpu.system_regs.cr.contains(PSRFlags::SECURE) {
-            return Err(EmulatorError::ExecutionError("Privileged instruction executed in user mode".to_string()));
+            return Err(EmulatorError::ExecutionError(
+                "Privileged instruction executed in user mode".to_string(),
+            ));
         }
 
         let value = cpu.get_gr(self.fields.sources[0].get_reg_num())?;
@@ -56,7 +57,9 @@ impl MoveFromPsr {
     pub fn execute(&self, cpu: &mut Cpu) -> Result<(), EmulatorError> {
         // Check if in privileged mode
         if !cpu.system_regs.cr.contains(PSRFlags::SECURE) {
-            return Err(EmulatorError::ExecutionError("Privileged instruction executed in user mode".to_string()));
+            return Err(EmulatorError::ExecutionError(
+                "Privileged instruction executed in user mode".to_string(),
+            ));
         }
 
         let psr = cpu.system_regs.cr.read(CRIndex::PSR);
@@ -81,10 +84,14 @@ impl Rfi {
     pub fn execute(&self, cpu: &mut Cpu) -> Result<(), EmulatorError> {
         // Check if in privileged mode
         if !cpu.system_regs.cr.contains(PSRFlags::SECURE) {
-            return Err(EmulatorError::ExecutionError("Privileged instruction executed in user mode".to_string()));
+            return Err(EmulatorError::ExecutionError(
+                "Privileged instruction executed in user mode".to_string(),
+            ));
         }
 
-        Err(EmulatorError::ExecutionError("RFI instruction not implemented".to_string()))
+        Err(EmulatorError::ExecutionError(
+            "RFI instruction not implemented".to_string(),
+        ))
     }
 }
 
@@ -102,7 +109,9 @@ impl Break {
 
     /// Execute the break instruction
     pub fn execute(&self, _cpu: &mut Cpu) -> Result<(), EmulatorError> {
-        Err(EmulatorError::ExecutionError("Break instruction executed".to_string()))
+        Err(EmulatorError::ExecutionError(
+            "Break instruction executed".to_string(),
+        ))
     }
 }
 
@@ -131,7 +140,7 @@ pub fn mov_from_psr(cpu: &mut Cpu, fields: &MFormat) -> Result<(), EmulatorError
 
 /// Reset user mask bits
 pub fn rum(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), EmulatorError> {
-    if let Some(RegisterType::GR(reg)) = fields.sources.get(0) {
+    if let Some(RegisterType::GR(reg)) = fields.sources.first() {
         let mask = cpu.gr[*reg as usize] & PSR_USER_MASK;
         let psr = cpu.system_regs.cr.read(CRIndex::PSR);
         let new_psr = psr & !mask;
@@ -142,7 +151,7 @@ pub fn rum(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), EmulatorErro
 
 /// Set user mask bits
 pub fn sum(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), EmulatorError> {
-    if let Some(RegisterType::GR(reg)) = fields.sources.get(0) {
+    if let Some(RegisterType::GR(reg)) = fields.sources.first() {
         let mask = cpu.gr[*reg as usize] & PSR_USER_MASK;
         let psr = cpu.system_regs.cr.read(CRIndex::PSR);
         let new_psr = psr | mask;
@@ -153,7 +162,7 @@ pub fn sum(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), EmulatorErro
 
 /// Exchange user mask bits
 pub fn xum(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), EmulatorError> {
-    if let Some(RegisterType::GR(reg)) = fields.sources.get(0) {
+    if let Some(RegisterType::GR(reg)) = fields.sources.first() {
         let mask = cpu.gr[*reg as usize] & PSR_USER_MASK;
         let psr = cpu.system_regs.cr.read(CRIndex::PSR);
         let new_psr = (psr & !mask) | (mask & psr);
@@ -186,7 +195,7 @@ pub fn rsm(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), EmulatorErro
 
 /// Move value to control register
 pub fn mov_to_cr(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), EmulatorError> {
-    if let Some(RegisterType::GR(reg)) = fields.sources.get(0) {
+    if let Some(RegisterType::GR(reg)) = fields.sources.first() {
         let value = cpu.gr[*reg as usize];
         cpu.system_regs.cr.update(|_| value);
     }
@@ -195,7 +204,7 @@ pub fn mov_to_cr(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), Emulat
 
 /// Move value from control register
 pub fn mov_from_cr(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), EmulatorError> {
-    if let Some(RegisterType::GR(reg)) = fields.destinations.get(0) {
+    if let Some(RegisterType::GR(reg)) = fields.destinations.first() {
         let value = cpu.system_regs.cr.bits();
         cpu.gr[*reg as usize] = value;
     }
@@ -205,17 +214,20 @@ pub fn mov_from_cr(cpu: &mut Cpu, fields: &InstructionFields) -> Result<(), Emul
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cpu::PSRFlags;
     use crate::cpu::instructions::{InstructionFields, RegisterType};
+    use crate::cpu::PSRFlags;
     use crate::memory::Memory;
 
     fn setup_test() -> (Cpu, Memory, InstructionFields) {
         let mut cpu = Cpu::new();
         let memory = Memory::new();
-        
+
         // Initialize in privileged mode by default
-        cpu.system_regs.cr.write(CRIndex::PSR, PSRFlags::SECURE.bits()).unwrap();
-        
+        cpu.system_regs
+            .cr
+            .write(CRIndex::PSR, PSRFlags::SECURE.bits())
+            .unwrap();
+
         let fields = InstructionFields {
             qp: 0,
             major_op: 0,
@@ -236,7 +248,10 @@ mod tests {
         // Test setting PSR bits
         cpu.set_gr(0, PSRFlags::SECURE.bits()).unwrap();
         mov_to_psr.execute(&mut cpu).unwrap();
-        assert_eq!(cpu.system_regs.cr.read(CRIndex::PSR) & PSR_USER_MASK, PSRFlags::SECURE.bits());
+        assert_eq!(
+            cpu.system_regs.cr.read(CRIndex::PSR) & PSR_USER_MASK,
+            PSRFlags::SECURE.bits()
+        );
 
         // Test clearing PSR bits
         cpu.set_gr(0, 0).unwrap();
@@ -251,11 +266,17 @@ mod tests {
         let mov_from_psr = MoveFromPsr::new(fields);
 
         // Set PSR bits
-        cpu.system_regs.cr.write(CRIndex::PSR, PSRFlags::SECURE.bits() | PSRFlags::UM.bits()).unwrap();
+        cpu.system_regs
+            .cr
+            .write(CRIndex::PSR, PSRFlags::SECURE.bits() | PSRFlags::UM.bits())
+            .unwrap();
 
         // Test reading PSR
         mov_from_psr.execute(&mut cpu).unwrap();
-        assert_eq!(cpu.get_gr(0).unwrap(), PSRFlags::SECURE.bits() | PSRFlags::UM.bits());
+        assert_eq!(
+            cpu.get_gr(0).unwrap(),
+            PSRFlags::SECURE.bits() | PSRFlags::UM.bits()
+        );
     }
 
     #[test]
@@ -315,9 +336,15 @@ mod tests {
         assert_eq!(cpu.system_regs.cr.read(CRIndex::PSR) & PSR_USER_MASK, 0); // Should change
 
         // Test move from PSR with true predicate
-        cpu.system_regs.cr.write(CRIndex::PSR, PSRFlags::SECURE.bits()).unwrap();
+        cpu.system_regs
+            .cr
+            .write(CRIndex::PSR, PSRFlags::SECURE.bits())
+            .unwrap();
         mov_from_psr.execute(&mut cpu).unwrap();
-        assert_eq!(cpu.get_gr(0).unwrap() & PSR_USER_MASK, PSRFlags::SECURE.bits()); // Should change
+        assert_eq!(
+            cpu.get_gr(0).unwrap() & PSR_USER_MASK,
+            PSRFlags::SECURE.bits()
+        ); // Should change
     }
 
     #[test]
@@ -328,7 +355,9 @@ mod tests {
 
         // Test RFI in privileged mode
         let result = rfi.execute(&mut cpu);
-        assert!(matches!(result, Err(EmulatorError::ExecutionError(msg)) if msg == "RFI instruction not implemented"));
+        assert!(
+            matches!(result, Err(EmulatorError::ExecutionError(msg)) if msg == "RFI instruction not implemented")
+        );
 
         // Test RFI in user mode
         cpu.system_regs.cr.write(CRIndex::PSR, 0).unwrap();
@@ -344,14 +373,18 @@ mod tests {
         // Test setting system mask bits
         let mask = PSRFlags::I.bits();
         cpu.system_regs.cr.write(CRIndex::PSR, 0).unwrap();
-        ssm(&mut cpu, &InstructionFields {
-            qp: 0,
-            major_op: 0,
-            sources: vec![],
-            destinations: vec![],
-            immediate: Some(mask as i64),
-            addressing: None,
-        }).unwrap();
+        ssm(
+            &mut cpu,
+            &InstructionFields {
+                qp: 0,
+                major_op: 0,
+                sources: vec![],
+                destinations: vec![],
+                immediate: Some(mask as i64),
+                addressing: None,
+            },
+        )
+        .unwrap();
         assert_eq!(cpu.system_regs.cr.read(CRIndex::PSR) & mask, mask);
     }
 
@@ -363,21 +396,25 @@ mod tests {
         // Test resetting system mask bits
         let mask = PSRFlags::I.bits();
         cpu.system_regs.cr.write(CRIndex::PSR, mask).unwrap();
-        rsm(&mut cpu, &InstructionFields {
-            qp: 0,
-            major_op: 0,
-            sources: vec![],
-            destinations: vec![],
-            immediate: Some(mask as i64),
-            addressing: None,
-        }).unwrap();
+        rsm(
+            &mut cpu,
+            &InstructionFields {
+                qp: 0,
+                major_op: 0,
+                sources: vec![],
+                destinations: vec![],
+                immediate: Some(mask as i64),
+                addressing: None,
+            },
+        )
+        .unwrap();
         assert_eq!(cpu.system_regs.cr.read(CRIndex::PSR) & mask, 0);
     }
 
     #[test]
     fn test_mov_to_cr() {
         let (mut cpu, _memory, fields) = setup_test();
-        
+
         // Test moving a value to CR
         let test_value = 0x5678;
         cpu.gr[0] = test_value;
@@ -388,13 +425,13 @@ mod tests {
     #[test]
     fn test_mov_from_cr() {
         let (mut cpu, _memory, fields) = setup_test();
-        
+
         // Set up a test value in CR
         let test_value = 0x5678;
         cpu.system_regs.cr.update(|_| test_value);
-        
+
         // Test moving from CR to GR
         mov_from_cr(&mut cpu, &fields).unwrap();
         assert_eq!(cpu.gr[0], test_value);
     }
-} 
+}

@@ -38,13 +38,13 @@ impl BreakFields {
 
     /// Convert to raw bits
     pub fn to_bits(&self) -> u64 {
-        (self.addr & 0xFFFF_FFFF_FFFF_F000) |
-        ((self.mask as u64) << 48) |
-        ((self.r as u64) << 56) |
-        ((self.w as u64) << 57) |
-        ((self.x as u64) << 58) |
-        ((self.plm as u64) << 59) |
-        ((self.ig as u64) << 63)
+        (self.addr & 0xFFFF_FFFF_FFFF_F000)
+            | (self.mask << 48)
+            | ((self.r as u64) << 56)
+            | ((self.w as u64) << 57)
+            | ((self.x as u64) << 58)
+            | ((self.plm as u64) << 59)
+            | ((self.ig as u64) << 63)
     }
 
     /// Check if address matches break condition
@@ -56,13 +56,25 @@ impl BreakFields {
 
         // Check access type
         match access_type {
-            BreakAccessType::Read => if !self.r { return false; },
-            BreakAccessType::Write => if !self.w { return false; },
-            BreakAccessType::Execute => if !self.x { return false; },
+            BreakAccessType::Read => {
+                if !self.r {
+                    return false;
+                }
+            }
+            BreakAccessType::Write => {
+                if !self.w {
+                    return false;
+                }
+            }
+            BreakAccessType::Execute => {
+                if !self.x {
+                    return false;
+                }
+            }
         }
 
         // Check address match with mask
-        let mask = !((self.mask as u64) << 48);
+        let mask = !(self.mask << 48);
         (addr & mask) == (self.addr & mask)
     }
 }
@@ -85,20 +97,25 @@ pub struct DBRFile {
     regs: [u64; NUM_DBR],
 }
 
+impl Default for DBRFile {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DBRFile {
     /// Create new register file
     pub fn new() -> Self {
-        Self {
-            regs: [0; NUM_DBR],
-        }
+        Self { regs: [0; NUM_DBR] }
     }
 
     /// Read register value
     pub fn read(&self, index: usize) -> Result<BreakFields, EmulatorError> {
         if index >= NUM_DBR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid debug break register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid debug break register index: {}",
+                index
+            )));
         }
         Ok(BreakFields::from_bits(self.regs[index]))
     }
@@ -106,9 +123,10 @@ impl DBRFile {
     /// Write register value
     pub fn write(&mut self, index: usize, fields: BreakFields) -> Result<(), EmulatorError> {
         if index >= NUM_DBR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid debug break register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid debug break register index: {}",
+                index
+            )));
         }
         self.regs[index] = fields.to_bits();
         Ok(())
@@ -127,7 +145,15 @@ impl DBRFile {
     }
 
     /// Set a new breakpoint
-    pub fn set_break(&mut self, addr: u64, mask: u64, r: bool, w: bool, x: bool, plm: u8) -> Result<(), EmulatorError> {
+    pub fn set_break(
+        &mut self,
+        addr: u64,
+        mask: u64,
+        r: bool,
+        w: bool,
+        x: bool,
+        plm: u8,
+    ) -> Result<(), EmulatorError> {
         // Find first unused register
         let mut target_index = None;
         for i in 0..NUM_DBR {
@@ -139,27 +165,31 @@ impl DBRFile {
             }
         }
 
-        let index = target_index.ok_or_else(|| EmulatorError::RegisterError(
-            "No free debug break registers".to_string()
-        ))?;
+        let index = target_index.ok_or_else(|| {
+            EmulatorError::RegisterError("No free debug break registers".to_string())
+        })?;
 
-        self.write(index, BreakFields {
-            addr,
-            mask,
-            r,
-            w,
-            x,
-            plm,
-            ig: false,
-        })
+        self.write(
+            index,
+            BreakFields {
+                addr,
+                mask,
+                r,
+                w,
+                x,
+                plm,
+                ig: false,
+            },
+        )
     }
 
     /// Clear a breakpoint
     pub fn clear_break(&mut self, index: usize) -> Result<(), EmulatorError> {
         if index >= NUM_DBR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid debug break register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid debug break register index: {}",
+                index
+            )));
         }
 
         let mut fields = self.read(index)?;
@@ -168,4 +198,4 @@ impl DBRFile {
         fields.x = false;
         self.write(index, fields)
     }
-} 
+}

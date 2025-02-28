@@ -1,5 +1,5 @@
+use crate::cpu::{PSRFlags, PSR};
 use crate::EmulatorError;
-use crate::cpu::{PSR, PSRFlags};
 
 /// Number of control registers
 pub const NUM_CR: usize = 128;
@@ -84,6 +84,12 @@ impl CRIndex {
 pub struct CRFile {
     /// Register values
     registers: [u64; NUM_CR],
+}
+
+impl Default for CRFile {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CRFile {
@@ -186,4 +192,4 @@ impl From<PSR> for CRFile {
     fn from(psr: PSR) -> Self {
         Self::from_bits_truncate(psr.bits())
     }
-} 
+}

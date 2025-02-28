@@ -1,27 +1,27 @@
 //! CPU implementation for IA-64 architecture
-//! 
+//!
 //! This module implements the CPU state and operations for the IA-64 architecture,
 //! including register management and instruction execution.
 
-use crate::EmulatorError;
 use crate::cpu::alat::ALAT;
-use crate::cpu::interrupts::{InterruptController, InterruptVector, InterruptState};
-use crate::cpu::syscall::{SyscallManager, SyscallNumber, SyscallContext};
+use crate::cpu::interrupts::{InterruptController, InterruptState, InterruptVector};
+use crate::cpu::registers::CRFile;
 use crate::cpu::registers::RegisterState;
-use crate::cpu::rse::{RSE, RSEConfig, RSEMode};
+use crate::cpu::rse::{RSEConfig, RSE};
+use crate::cpu::syscall::{SyscallContext, SyscallManager, SyscallNumber};
 use crate::memory::Memory;
-use crate::cpu::registers::{ARFile, CRFile, RRFile, PKRFile, DBRFile, DDRFile};
+use crate::EmulatorError;
 
 pub mod alat;
-pub mod interrupts;
-pub mod syscall;
 pub mod instructions;
+pub mod interrupts;
 /// Register management module containing implementations for various register types
 /// including general purpose registers, floating point registers, predicate registers,
 /// branch registers, application registers, control registers, region registers,
 /// protection key registers, debug break registers, and data debug registers.
 pub mod registers;
 pub mod rse;
+pub mod syscall;
 
 /// Number of general purpose registers in IA-64
 pub const NUM_GR: usize = 128;
@@ -171,25 +171,26 @@ impl Cpu {
         self.fr = [0; NUM_FR];
         self.pr = [false; NUM_PR];
         self.br = [0; NUM_BR];
-        
+
         // Reset instruction pointer
         self.ip = 0;
-        
+
         // Reset current frame marker
         self.cfm = 0;
-        
+
         // Reset system registers
         self.system_regs.cr = PSR::empty().into();
-        
+
         Ok(())
     }
 
     /// Get the value of a general register
     pub fn get_gr(&self, reg: usize) -> Result<u64, EmulatorError> {
         if reg >= NUM_GR {
-            return Err(EmulatorError::CpuStateError(
-                format!("Invalid general register index: {}", reg)
-            ));
+            return Err(EmulatorError::CpuStateError(format!(
+                "Invalid general register index: {}",
+                reg
+            )));
         }
         Ok(self.gr[reg])
     }
@@ -197,9 +198,10 @@ impl Cpu {
     /// Set the value of a general register
     pub fn set_gr(&mut self, reg: usize, value: u64) -> Result<(), EmulatorError> {
         if reg >= NUM_GR {
-            return Err(EmulatorError::CpuStateError(
-                format!("Invalid general register index: {}", reg)
-            ));
+            return Err(EmulatorError::CpuStateError(format!(
+                "Invalid general register index: {}",
+                reg
+            )));
         }
         // r0 is always 0 in IA-64
         if reg != 0 {
@@ -211,9 +213,10 @@ impl Cpu {
     /// Get the value of a floating point register
     pub fn get_fr(&self, reg: usize) -> Result<f64, EmulatorError> {
         if reg >= NUM_FR {
-            return Err(EmulatorError::CpuStateError(
-                format!("Invalid floating point register index: {}", reg)
-            ));
+            return Err(EmulatorError::CpuStateError(format!(
+                "Invalid floating point register index: {}",
+                reg
+            )));
         }
         Ok(f64::from_bits(self.fr[reg]))
     }
@@ -221,9 +224,10 @@ impl Cpu {
     /// Set the value of a floating point register
     pub fn set_fr(&mut self, reg: usize, value: f64) -> Result<(), EmulatorError> {
         if reg >= NUM_FR {
-            return Err(EmulatorError::CpuStateError(
-                format!("Invalid floating point register index: {}", reg)
-            ));
+            return Err(EmulatorError::CpuStateError(format!(
+                "Invalid floating point register index: {}",
+                reg
+            )));
         }
         self.fr[reg] = value.to_bits();
         Ok(())
@@ -232,9 +236,10 @@ impl Cpu {
     /// Get the value of a predicate register
     pub fn get_pr(&self, reg: usize) -> Result<bool, EmulatorError> {
         if reg >= NUM_PR {
-            return Err(EmulatorError::CpuStateError(
-                format!("Invalid predicate register index: {}", reg)
-            ));
+            return Err(EmulatorError::CpuStateError(format!(
+                "Invalid predicate register index: {}",
+                reg
+            )));
         }
         Ok(self.pr[reg])
     }
@@ -242,9 +247,10 @@ impl Cpu {
     /// Set the value of a predicate register
     pub fn set_pr(&mut self, reg: usize, value: bool) -> Result<(), EmulatorError> {
         if reg >= NUM_PR {
-            return Err(EmulatorError::CpuStateError(
-                format!("Invalid predicate register index: {}", reg)
-            ));
+            return Err(EmulatorError::CpuStateError(format!(
+                "Invalid predicate register index: {}",
+                reg
+            )));
         }
         self.pr[reg] = value;
         Ok(())
@@ -253,9 +259,10 @@ impl Cpu {
     /// Get the value of a branch register
     pub fn get_br(&self, reg: usize) -> Result<u64, EmulatorError> {
         if reg >= NUM_BR {
-            return Err(EmulatorError::CpuStateError(
-                format!("Invalid branch register index: {}", reg)
-            ));
+            return Err(EmulatorError::CpuStateError(format!(
+                "Invalid branch register index: {}",
+                reg
+            )));
         }
         Ok(self.br[reg])
     }
@@ -263,16 +270,23 @@ impl Cpu {
     /// Set the value of a branch register
     pub fn set_br(&mut self, reg: usize, value: u64) -> Result<(), EmulatorError> {
         if reg >= NUM_BR {
-            return Err(EmulatorError::CpuStateError(
-                format!("Invalid branch register index: {}", reg)
-            ));
+            return Err(EmulatorError::CpuStateError(format!(
+                "Invalid branch register index: {}",
+                reg
+            )));
         }
         self.br[reg] = value;
         Ok(())
     }
 
     /// Add entry to ALAT
-    pub fn alat_add_entry(&mut self, address: u64, size: u64, register: u32, is_integer: bool) -> Result<(), EmulatorError> {
+    pub fn alat_add_entry(
+        &mut self,
+        address: u64,
+        size: u64,
+        register: u32,
+        is_integer: bool,
+    ) -> Result<(), EmulatorError> {
         self.alat.add_entry(address, size, register, is_integer)
     }
 
@@ -292,7 +306,11 @@ impl Cpu {
     }
 
     /// Get ALAT entry information
-    pub fn alat_get_entry_info(&self, register: u32, is_integer: bool) -> Option<(u64, u64, alat::EntryState)> {
+    pub fn alat_get_entry_info(
+        &self,
+        register: u32,
+        is_integer: bool,
+    ) -> Option<(u64, u64, alat::EntryState)> {
         self.alat.get_entry_info(register, is_integer)
     }
 
@@ -307,8 +325,14 @@ impl Cpu {
     }
 
     /// Register interrupt handler
-    pub fn register_interrupt_handler(&mut self, vector: InterruptVector, address: u64, min_privilege: u8) -> Result<(), EmulatorError> {
-        self.interrupt_ctrl.register_handler(vector, address, min_privilege)
+    pub fn register_interrupt_handler(
+        &mut self,
+        vector: InterruptVector,
+        address: u64,
+        min_privilege: u8,
+    ) -> Result<(), EmulatorError> {
+        self.interrupt_ctrl
+            .register_handler(vector, address, min_privilege)
     }
 
     /// Enable/disable interrupts
@@ -340,7 +364,7 @@ impl Cpu {
             // Switch to privileged mode
             self.system_regs.cr.set(PSRFlags::I, false); // Disable interrupts
             self.system_regs.cr.set(PSRFlags::IC, true); // Set interrupt collection
-            
+
             // Return handler address
             Some(handler_addr)
         } else {
@@ -353,19 +377,25 @@ impl Cpu {
         // Get current interrupt state
         let state = match self.interrupt_ctrl.current_interrupt() {
             Some(s) => s.clone(),
-            None => return Err(EmulatorError::ExecutionError("No interrupt to return from".to_string())),
+            None => {
+                return Err(EmulatorError::ExecutionError(
+                    "No interrupt to return from".to_string(),
+                ))
+            }
         };
 
         // Restore saved state
         self.system_regs.cr = PSR::from_bits_truncate(state.psr).into();
-        
+
         // Get next handler or return to interrupted code
-        let next_ip = self.interrupt_ctrl.return_from_interrupt()
+        let next_ip = self
+            .interrupt_ctrl
+            .return_from_interrupt()
             .unwrap_or(state.ip);
-            
+
         // Update instruction pointer
         self.ip = next_ip;
-        
+
         Ok(())
     }
 
@@ -415,7 +445,9 @@ impl Cpu {
         syscall_mgr.begin_syscall(self, syscall_num)?;
 
         // Execute syscall
-        let mut context = syscall_mgr.current.take()
+        let mut context = syscall_mgr
+            .current
+            .take()
             .ok_or(EmulatorError::NoSyscallContext)?;
         syscall_mgr.execute_syscall(self, &mut context)?;
         syscall_mgr.current = Some(context);
@@ -427,7 +459,14 @@ impl Cpu {
     }
 
     /// Register system call handler
-    pub fn register_syscall_handler(&mut self, number: SyscallNumber, handler: impl Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + Send + Sync + 'static) {
+    pub fn register_syscall_handler(
+        &mut self,
+        number: SyscallNumber,
+        handler: impl Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError>
+            + Send
+            + Sync
+            + 'static,
+    ) {
         self.syscall_mgr.register_handler(number, handler);
     }
 
@@ -472,12 +511,20 @@ impl Cpu {
     }
 
     /// Allocate registers in current frame
-    pub fn allocate_registers(&mut self, memory: &mut Memory, count: u32) -> Result<(), EmulatorError> {
+    pub fn allocate_registers(
+        &mut self,
+        memory: &mut Memory,
+        count: u32,
+    ) -> Result<(), EmulatorError> {
         self.rse.allocate_registers(memory, count)
     }
 
     /// Deallocate registers from current frame
-    pub fn deallocate_registers(&mut self, memory: &mut Memory, count: u32) -> Result<(), EmulatorError> {
+    pub fn deallocate_registers(
+        &mut self,
+        memory: &mut Memory,
+        count: u32,
+    ) -> Result<(), EmulatorError> {
         self.rse.deallocate_registers(memory, count)
     }
 
@@ -487,8 +534,14 @@ impl Cpu {
     }
 
     /// Handle branch with alloc
-    pub fn branch_with_alloc(&mut self, memory: &mut Memory, sof: u32, sol: u32, sor: u32) -> Result<(), EmulatorError> {
-        let old_sof = (self.cfm >> 0 & 0x7F) as u32;
+    pub fn branch_with_alloc(
+        &mut self,
+        memory: &mut Memory,
+        sof: u32,
+        sol: u32,
+        sor: u32,
+    ) -> Result<(), EmulatorError> {
+        let old_sof = (self.cfm & 0x7F) as u32;
         let to_allocate = sof.saturating_sub(old_sof);
         let to_deallocate = old_sof.saturating_sub(sof);
 
@@ -498,29 +551,25 @@ impl Cpu {
             self.rse.deallocate_registers(memory, to_deallocate)?;
         }
 
-        self.cfm = ((sof as u64) << 0) |
-                  ((sol as u64) << 7) |
-                  ((sor as u64) << 14);
+        self.cfm = (sof as u64) | ((sol as u64) << 7) | ((sor as u64) << 14);
         Ok(())
     }
 
     /// Handle return
     pub fn handle_return(&mut self, memory: &mut Memory) -> Result<(), EmulatorError> {
         // Get previous frame state from PFS
-        let prev_sof = (self.pfs >> 0) & 0x7F;
+        let prev_sof = self.pfs & 0x7F;
         let prev_sol = (self.pfs >> 7) & 0x7F;
         let prev_sor = (self.pfs >> 14) & 0x7F;
 
         // Get current frame size
-        let curr_sof = (self.cfm >> 0) & 0x7F;
+        let curr_sof = self.cfm & 0x7F;
 
         // Deallocate current frame
         self.deallocate_registers(memory, curr_sof as u32)?;
 
         // Restore previous frame
-        self.cfm = ((prev_sof as u64) << 0) |
-                   ((prev_sol as u64) << 7) |
-                   ((prev_sor as u64) << 14);
+        self.cfm = prev_sof | (prev_sol << 7) | (prev_sor << 14);
 
         Ok(())
     }
@@ -540,7 +589,12 @@ impl Cpu {
     }
 
     /// Check debug breakpoint
-    pub fn check_breakpoint(&self, addr: u64, pl: u8, access_type: registers::dbr::BreakAccessType) -> bool {
+    pub fn check_breakpoint(
+        &self,
+        addr: u64,
+        pl: u8,
+        access_type: registers::dbr::BreakAccessType,
+    ) -> bool {
         self.system_regs.dbr.check_break(addr, pl, access_type)
     }
 
@@ -568,14 +622,21 @@ impl Cpu {
     }
 
     /// Updates the frame markers for the current frame
-    pub fn update_frame_markers(&mut self, sof: u32, sol: u32, sor: u32) -> Result<(), EmulatorError> {
+    pub fn update_frame_markers(
+        &mut self,
+        sof: u32,
+        sol: u32,
+        sor: u32,
+    ) -> Result<(), EmulatorError> {
         // Validate parameters
         if sof < sol || sol < sor {
-            return Err(EmulatorError::CpuStateError("Invalid frame marker values".to_string()));
+            return Err(EmulatorError::CpuStateError(
+                "Invalid frame marker values".to_string(),
+            ));
         }
-        
+
         // Update frame markers
-        self.cfm = ((sof as u64) << 0) | ((sol as u64) << 7) | ((sor as u64) << 14);
+        self.cfm = (sof as u64) | ((sol as u64) << 7) | ((sor as u64) << 14);
         Ok(())
     }
 
@@ -637,4 +698,4 @@ mod tests {
         assert_eq!(cpu.gr[8], count);
         assert_eq!(cpu.gr[9], 0); // no error
     }
-} 
+}

@@ -1,11 +1,11 @@
 //! Floating-point (F-type) instruction implementations
-//! 
+//!
 //! This module implements the floating-point instructions for the IA-64 architecture.
 
 use super::{Instruction, InstructionFields, RegisterType};
-use crate::EmulatorError;
 use crate::cpu::Cpu;
 use crate::memory::Memory;
+use crate::EmulatorError;
 
 /// Floating-point add instruction
 #[derive(Debug)]
@@ -30,12 +30,20 @@ impl Instruction for FAdd {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::FR(reg) => cpu.get_fr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::FR(reg) => cpu.get_fr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform floating-point addition
@@ -44,7 +52,11 @@ impl Instruction for FAdd {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::FR(reg) => cpu.set_fr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -74,12 +86,20 @@ impl Instruction for FSub {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::FR(reg) => cpu.get_fr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::FR(reg) => cpu.get_fr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform floating-point subtraction
@@ -88,7 +108,11 @@ impl Instruction for FSub {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::FR(reg) => cpu.set_fr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -118,12 +142,20 @@ impl Instruction for FMul {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::FR(reg) => cpu.get_fr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::FR(reg) => cpu.get_fr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform floating-point multiplication
@@ -132,7 +164,11 @@ impl Instruction for FMul {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::FR(reg) => cpu.set_fr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -162,17 +198,27 @@ impl Instruction for FDiv {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::FR(reg) => cpu.get_fr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::FR(reg) => cpu.get_fr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Check for division by zero
         if src2 == 0.0 {
-            return Err(EmulatorError::ExecutionError("Division by zero".to_string()));
+            return Err(EmulatorError::ExecutionError(
+                "Division by zero".to_string(),
+            ));
         }
 
         // Perform floating-point division
@@ -181,7 +227,11 @@ impl Instruction for FDiv {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::FR(reg) => cpu.set_fr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -197,11 +247,13 @@ mod tests {
     fn setup_test() -> (Cpu, Memory, InstructionFields) {
         let mut cpu = Cpu::new();
         let mut memory = Memory::new();
-        memory.map(0x1000, 4096, Permissions::ReadWriteExecute).unwrap();
-        
+        memory
+            .map(0x1000, 4096, Permissions::ReadWriteExecute)
+            .unwrap();
+
         // Initialize predicate registers
         cpu.set_pr(0, true).unwrap(); // Set p0 to true by default
-        
+
         let fields = InstructionFields {
             qp: 0,
             major_op: 0,
@@ -323,4 +375,4 @@ mod tests {
         fadd.execute(&mut cpu, &mut memory).unwrap();
         assert!((cpu.get_fr(3).unwrap() - 5.0).abs() < f64::EPSILON);
     }
-} 
+}

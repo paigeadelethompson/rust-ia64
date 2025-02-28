@@ -1,11 +1,11 @@
 //! Branch (B-type) instruction implementations
-//! 
+//!
 //! This module implements the branch instructions for the IA-64 architecture.
 
 use super::{Instruction, InstructionFields, RegisterType};
-use crate::EmulatorError;
 use crate::cpu::Cpu;
 use crate::memory::Memory;
+use crate::EmulatorError;
 
 /// Branch types
 #[derive(Debug, Clone, Copy)]
@@ -80,15 +80,15 @@ pub struct Branch {
 impl Branch {
     /// Create new branch instruction
     pub fn new(
-        fields: InstructionFields, 
+        fields: InstructionFields,
         branch_type: BranchType,
         prediction: BranchPrediction,
         rse_behavior: BranchRSE,
         importance: BranchImportance,
         registers: BranchRegisters,
     ) -> Self {
-        Self { 
-            fields, 
+        Self {
+            fields,
             branch_type,
             prediction,
             rse_behavior,
@@ -98,7 +98,11 @@ impl Branch {
     }
 
     /// Create new branch instruction from decoded instruction
-    pub fn from_decoded(fields: InstructionFields, branch_type: BranchType, completers: Option<Vec<String>>) -> Self {
+    pub fn from_decoded(
+        fields: InstructionFields,
+        branch_type: BranchType,
+        completers: Option<Vec<String>>,
+    ) -> Self {
         // Default values
         let mut prediction = BranchPrediction::StaticTake;
         let mut rse_behavior = BranchRSE::Normal;
@@ -118,12 +122,19 @@ impl Branch {
                     "few" => registers = BranchRegisters::Few,
                     "many" => registers = BranchRegisters::Many,
                     "" => (), // Skip empty completers
-                    _ => (), // Ignore unknown completers
+                    _ => (),  // Ignore unknown completers
                 }
             }
         }
 
-        Self::new(fields, branch_type, prediction, rse_behavior, importance, registers)
+        Self::new(
+            fields,
+            branch_type,
+            prediction,
+            rse_behavior,
+            importance,
+            registers,
+        )
     }
 
     /// Calculate branch target address
@@ -138,7 +149,7 @@ impl Branch {
                 match self.fields.sources[0] {
                     RegisterType::BR(reg) => cpu.get_br(reg as usize),
                     _ => Err(EmulatorError::ExecutionError(
-                        "Invalid branch target register type".to_string()
+                        "Invalid branch target register type".to_string(),
                     )),
                 }
             }
@@ -152,66 +163,114 @@ impl Branch {
             BranchType::Equal => {
                 let src1 = match self.fields.sources[0] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 let src2 = match self.fields.sources[1] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 Ok(src1 == src2)
             }
             BranchType::NotEqual => {
                 let src1 = match self.fields.sources[0] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 let src2 = match self.fields.sources[1] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 Ok(src1 != src2)
             }
             BranchType::LessThan => {
                 let src1 = match self.fields.sources[0] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 let src2 = match self.fields.sources[1] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 Ok((src1 as i64) < (src2 as i64))
             }
             BranchType::LessEqual => {
                 let src1 = match self.fields.sources[0] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 let src2 = match self.fields.sources[1] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 Ok((src1 as i64) <= (src2 as i64))
             }
             BranchType::GreaterThan => {
                 let src1 = match self.fields.sources[0] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 let src2 = match self.fields.sources[1] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 Ok((src1 as i64) > (src2 as i64))
             }
             BranchType::GreaterEqual => {
                 let src1 = match self.fields.sources[0] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 let src2 = match self.fields.sources[1] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
                 Ok((src1 as i64) >= (src2 as i64))
             }
@@ -237,7 +296,7 @@ impl Instruction for Branch {
             }
 
             // Update branch register if specified
-            if let Some(RegisterType::BR(reg)) = self.fields.destinations.get(0) {
+            if let Some(RegisterType::BR(reg)) = self.fields.destinations.first() {
                 cpu.set_br(*reg as usize, cpu.ip.wrapping_add(16))?; // Save return address
             }
 
@@ -282,11 +341,13 @@ mod tests {
     fn setup_test() -> (Cpu, Memory, InstructionFields) {
         let mut cpu = Cpu::new();
         let mut memory = Memory::new();
-        memory.map(0x1000, 4096, Permissions::ReadWriteExecute).unwrap();
-        
+        memory
+            .map(0x1000, 4096, Permissions::ReadWriteExecute)
+            .unwrap();
+
         // Initialize predicate registers
         cpu.set_pr(0, true).unwrap(); // Set p0 to true by default
-        
+
         let fields = InstructionFields {
             qp: 0,
             major_op: 0,
@@ -301,7 +362,14 @@ mod tests {
     #[test]
     fn test_unconditional_branch() {
         let (mut cpu, mut memory, fields) = setup_test();
-        let branch = Branch::new(fields, BranchType::Unconditional, BranchPrediction::StaticTake, BranchRSE::Normal, BranchImportance::Normal, BranchRegisters::Few);
+        let branch = Branch::new(
+            fields,
+            BranchType::Unconditional,
+            BranchPrediction::StaticTake,
+            BranchRSE::Normal,
+            BranchImportance::Normal,
+            BranchRegisters::Few,
+        );
 
         cpu.ip = 0x1000;
         branch.execute(&mut cpu, &mut memory).unwrap();
@@ -313,7 +381,14 @@ mod tests {
     fn test_conditional_branch_equal_taken() {
         let (mut cpu, mut memory, mut fields) = setup_test();
         fields.sources = vec![RegisterType::GR(1), RegisterType::GR(2)];
-        let branch = Branch::new(fields, BranchType::Equal, BranchPrediction::StaticTake, BranchRSE::Normal, BranchImportance::Normal, BranchRegisters::Few);
+        let branch = Branch::new(
+            fields,
+            BranchType::Equal,
+            BranchPrediction::StaticTake,
+            BranchRSE::Normal,
+            BranchImportance::Normal,
+            BranchRegisters::Few,
+        );
 
         cpu.ip = 0x1000;
         cpu.set_gr(1, 42).unwrap();
@@ -326,7 +401,14 @@ mod tests {
     fn test_conditional_branch_equal_not_taken() {
         let (mut cpu, mut memory, mut fields) = setup_test();
         fields.sources = vec![RegisterType::GR(1), RegisterType::GR(2)];
-        let branch = Branch::new(fields, BranchType::Equal, BranchPrediction::StaticNotTaken, BranchRSE::Normal, BranchImportance::Normal, BranchRegisters::Few);
+        let branch = Branch::new(
+            fields,
+            BranchType::Equal,
+            BranchPrediction::StaticNotTaken,
+            BranchRSE::Normal,
+            BranchImportance::Normal,
+            BranchRegisters::Few,
+        );
 
         cpu.ip = 0x1000;
         cpu.set_gr(1, 42).unwrap();
@@ -339,7 +421,14 @@ mod tests {
     fn test_conditional_branch_less_than() {
         let (mut cpu, mut memory, mut fields) = setup_test();
         fields.sources = vec![RegisterType::GR(1), RegisterType::GR(2)];
-        let branch = Branch::new(fields, BranchType::LessThan, BranchPrediction::StaticTake, BranchRSE::Normal, BranchImportance::Normal, BranchRegisters::Few);
+        let branch = Branch::new(
+            fields,
+            BranchType::LessThan,
+            BranchPrediction::StaticTake,
+            BranchRSE::Normal,
+            BranchImportance::Normal,
+            BranchRegisters::Few,
+        );
 
         // Test signed comparison
         cpu.ip = 0x1000;
@@ -360,7 +449,14 @@ mod tests {
     fn test_predicated_branch() {
         let (mut cpu, mut memory, mut fields) = setup_test();
         fields.qp = 1; // Use p1 for predication
-        let branch = Branch::new(fields, BranchType::Unconditional, BranchPrediction::StaticTake, BranchRSE::Normal, BranchImportance::Normal, BranchRegisters::Few);
+        let branch = Branch::new(
+            fields,
+            BranchType::Unconditional,
+            BranchPrediction::StaticTake,
+            BranchRSE::Normal,
+            BranchImportance::Normal,
+            BranchRegisters::Few,
+        );
 
         cpu.ip = 0x1000;
         cpu.set_pr(1, false).unwrap();
@@ -377,7 +473,14 @@ mod tests {
         let (mut cpu, mut memory, mut fields) = setup_test();
         fields.immediate = None;
         fields.sources = vec![RegisterType::BR(1)];
-        let branch = Branch::new(fields, BranchType::Unconditional, BranchPrediction::StaticTake, BranchRSE::Normal, BranchImportance::Normal, BranchRegisters::Few);
+        let branch = Branch::new(
+            fields,
+            BranchType::Unconditional,
+            BranchPrediction::StaticTake,
+            BranchRSE::Normal,
+            BranchImportance::Normal,
+            BranchRegisters::Few,
+        );
 
         cpu.ip = 0x1000;
         cpu.set_br(1, 0x2000).unwrap();
@@ -389,7 +492,7 @@ mod tests {
     #[test]
     fn test_branch_completers() {
         let (mut cpu, mut memory, mut fields) = setup_test();
-        
+
         // Test branch with all completers
         let completers = Some(vec![
             "dptk".to_string(),
@@ -397,35 +500,38 @@ mod tests {
             "imp".to_string(),
             "many".to_string(),
         ]);
-        
+
         let branch = Branch::from_decoded(fields.clone(), BranchType::Unconditional, completers);
-        
+
         // Verify completer values
         assert!(matches!(branch.prediction, BranchPrediction::DynamicTake));
         assert!(matches!(branch.rse_behavior, BranchRSE::Clear));
         assert!(matches!(branch.importance, BranchImportance::Important));
         assert!(matches!(branch.registers, BranchRegisters::Many));
-        
+
         // Test branch with default completers
         let branch = Branch::from_decoded(fields.clone(), BranchType::Unconditional, None);
-        
+
         // Verify default values
         assert!(matches!(branch.prediction, BranchPrediction::StaticTake));
         assert!(matches!(branch.rse_behavior, BranchRSE::Normal));
         assert!(matches!(branch.importance, BranchImportance::Normal));
         assert!(matches!(branch.registers, BranchRegisters::Few));
-        
+
         // Test branch with partial completers
         let completers = Some(vec![
             "spnt".to_string(),
             "".to_string(), // Empty completer should be ignored
             "imp".to_string(),
         ]);
-        
+
         let branch = Branch::from_decoded(fields, BranchType::Unconditional, completers);
-        
+
         // Verify mixed values
-        assert!(matches!(branch.prediction, BranchPrediction::StaticNotTaken));
+        assert!(matches!(
+            branch.prediction,
+            BranchPrediction::StaticNotTaken
+        ));
         assert!(matches!(branch.rse_behavior, BranchRSE::Normal));
         assert!(matches!(branch.importance, BranchImportance::Important));
         assert!(matches!(branch.registers, BranchRegisters::Few));
@@ -435,25 +541,25 @@ mod tests {
     fn test_branch_execution_with_completers() {
         let (mut cpu, mut memory, mut fields) = setup_test();
         fields.sources = vec![RegisterType::GR(1), RegisterType::GR(2)];
-        
+
         // Test branch with RSE clear
         let completers = Some(vec!["sptk".to_string(), "clr".to_string()]);
         let branch = Branch::from_decoded(fields.clone(), BranchType::Equal, completers);
-        
+
         cpu.ip = 0x1000;
         cpu.set_gr(1, 42).unwrap();
         cpu.set_gr(2, 42).unwrap();
         branch.execute(&mut cpu, &mut memory).unwrap();
         assert_eq!(cpu.ip, 0x1010); // Should branch when equal
-        
+
         // Test branch with importance flag
         let completers = Some(vec!["dptk".to_string(), "imp".to_string()]);
         let branch = Branch::from_decoded(fields, BranchType::Equal, completers);
-        
+
         cpu.ip = 0x1000;
         cpu.set_gr(1, 42).unwrap();
         cpu.set_gr(2, 43).unwrap();
         branch.execute(&mut cpu, &mut memory).unwrap();
         assert_eq!(cpu.ip, 0x1000); // Should not branch when not equal
     }
-} 
+}

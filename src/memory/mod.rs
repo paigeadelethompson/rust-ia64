@@ -1,5 +1,5 @@
 //! Memory management implementation
-//! 
+//!
 //! This module implements memory management including permissions,
 //! memory mapping, and memory access operations.
 
@@ -24,7 +24,10 @@ pub enum Permissions {
 impl Permissions {
     /// Check if permission contains read access
     pub fn can_read(&self) -> bool {
-        matches!(self, Self::Read | Self::ReadWrite | Self::ReadExecute | Self::ReadWriteExecute)
+        matches!(
+            self,
+            Self::Read | Self::ReadWrite | Self::ReadExecute | Self::ReadWriteExecute
+        )
     }
 
     /// Check if permission contains write access
@@ -108,7 +111,7 @@ impl CacheLine {
     /// Write back dirty line to memory
     fn write_back(&mut self, memory: &mut Memory, addr: u64) -> Result<(), EmulatorError> {
         if self.is_dirty() {
-            let _ = memory.write_bytes(addr, &self.data)?;
+            memory.write_bytes(addr, &self.data)?;
             self.state = CacheLineState::Exclusive;
         }
         Ok(())
@@ -129,7 +132,9 @@ struct CacheSet {
 impl CacheSet {
     fn new(index: usize, associativity: usize, line_size: usize) -> Self {
         Self {
-            lines: (0..associativity).map(|_| CacheLine::new(0, line_size)).collect(),
+            lines: (0..associativity)
+                .map(|_| CacheLine::new(0, line_size))
+                .collect(),
             access_counter: 0,
             index,
         }
@@ -148,16 +153,20 @@ impl CacheSet {
 
     fn find_victim(&mut self) -> usize {
         self.access_counter += 1;
-        
+
         // First try to find an invalid line
-        if let Some((idx, _)) = self.lines.iter()
+        if let Some((idx, _)) = self
+            .lines
+            .iter()
             .enumerate()
-            .find(|(_, l)| l.state == CacheLineState::Invalid) {
+            .find(|(_, l)| l.state == CacheLineState::Invalid)
+        {
             return idx;
         }
 
         // Otherwise use LRU replacement
-        self.lines.iter()
+        self.lines
+            .iter()
             .enumerate()
             .min_by_key(|(_, line)| line.last_access)
             .map(|(i, _)| i)
@@ -219,7 +228,9 @@ impl CacheLevel {
         let set_bits = num_sets.trailing_zeros();
 
         Self {
-            sets: (0..num_sets).map(|i| CacheSet::new(i, associativity, line_size)).collect(),
+            sets: (0..num_sets)
+                .map(|i| CacheSet::new(i, associativity, line_size))
+                .collect(),
             num_sets,
             associativity,
             line_size,
@@ -238,8 +249,7 @@ impl CacheLevel {
     }
 
     fn compose_address(&self, tag: u64, set_idx: usize) -> u64 {
-        (tag << (self.line_bits + self.set_bits)) |
-        ((set_idx as u64) << self.line_bits)
+        (tag << (self.line_bits + self.set_bits)) | ((set_idx as u64) << self.line_bits)
     }
 
     fn get_set_index(&self, addr: u64) -> usize {
@@ -289,7 +299,7 @@ impl CacheLevel {
         let mut dirty_lines = Vec::new();
         let mut set_indices = Vec::new();
         let mut tags = Vec::new();
-        
+
         // First collect all the information we need
         for (set_idx, set) in self.sets.iter_mut().enumerate() {
             for line in &mut set.lines {
@@ -301,11 +311,12 @@ impl CacheLevel {
                 }
             }
         }
-        
+
         // Now compose addresses
-        dirty_lines.into_iter()
-            .zip(tags.into_iter())
-            .zip(set_indices.into_iter())
+        dirty_lines
+            .into_iter()
+            .zip(tags)
+            .zip(set_indices)
             .map(|((data, tag), set_idx)| {
                 let addr = self.compose_address(tag, set_idx);
                 (addr, data)
@@ -321,7 +332,7 @@ impl CacheLevel {
         let (tag, set_index, offset) = self.decompose_address(addr);
         let set = &mut self.sets[set_index];
         let counter = set.access_counter;
-        
+
         if let Some(line) = set.find_line_mut(tag) {
             // Cache hit
             line.data[offset..offset + data.len()].copy_from_slice(data);
@@ -368,6 +379,12 @@ pub struct Memory {
     speculative_loads: Vec<SpeculativeLoad>,
 }
 
+impl Default for Memory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Memory {
     /// Create new memory instance
     pub fn new() -> Self {
@@ -411,11 +428,18 @@ impl Memory {
     }
 
     /// Map memory region
-    pub fn map(&mut self, base: u64, size: u64, permissions: Permissions) -> Result<(), EmulatorError> {
+    pub fn map(
+        &mut self,
+        base: u64,
+        size: u64,
+        permissions: Permissions,
+    ) -> Result<(), EmulatorError> {
         // Check for overlapping regions
         for (_, region) in self.regions.range(..=base) {
             if region.base + region.size > base {
-                return Err(EmulatorError::MemoryError("Overlapping memory region".to_string()));
+                return Err(EmulatorError::MemoryError(
+                    "Overlapping memory region".to_string(),
+                ));
             }
         }
 
@@ -443,7 +467,9 @@ impl Memory {
         // Check permissions first
         let region = self.find_region(addr)?;
         if !region.permissions.can_read() {
-            return Err(EmulatorError::MemoryError("Read permission denied".to_string()));
+            return Err(EmulatorError::MemoryError(
+                "Read permission denied".to_string(),
+            ));
         }
 
         let offset = (addr - region.base) as usize;
@@ -567,7 +593,8 @@ impl Memory {
 
     /// Find memory region containing address
     fn find_region(&self, addr: u64) -> Result<&Region, EmulatorError> {
-        let (_, region) = self.regions
+        let (_, region) = self
+            .regions
             .range(..=addr)
             .next_back()
             .ok_or_else(|| EmulatorError::MemoryError("Address not mapped".to_string()))?;
@@ -586,7 +613,11 @@ impl Memory {
     }
 
     /// Track a speculative load
-    pub fn track_speculative_load(&mut self, addr: u64, size: usize) -> Result<SpeculativeStatus, EmulatorError> {
+    pub fn track_speculative_load(
+        &mut self,
+        addr: u64,
+        size: usize,
+    ) -> Result<SpeculativeStatus, EmulatorError> {
         // Try to perform the load
         let mut data = vec![0; size];
         match self.read_bytes(addr, &mut data) {
@@ -624,7 +655,8 @@ impl Memory {
 
     /// Check if a speculative load succeeded
     pub fn check_speculative_load(&self, addr: u64) -> Option<SpeculativeStatus> {
-        self.speculative_loads.iter()
+        self.speculative_loads
+            .iter()
             .find(|l| l.addr == addr)
             .map(|l| l.status)
     }
@@ -649,13 +681,17 @@ impl Memory {
         // Check permissions first
         let region = self.find_region(addr)?;
         if !region.permissions.can_write() {
-            return Err(EmulatorError::MemoryError("Write permission denied".to_string()));
+            return Err(EmulatorError::MemoryError(
+                "Write permission denied".to_string(),
+            ));
         }
 
         // Check if write would exceed region bounds
         let offset = (addr - region.base) as usize;
         if offset + data.len() > region.size as usize {
-            return Err(EmulatorError::MemoryError("Write exceeds region bounds".to_string()));
+            return Err(EmulatorError::MemoryError(
+                "Write exceeds region bounds".to_string(),
+            ));
         }
 
         // Cache the non-temporal flags before borrowing self
@@ -733,7 +769,8 @@ impl Memory {
         let l3_dirty = self.l3_cache.flush();
 
         // Write back all dirty lines
-        for (addr, data) in l1_dirty.into_iter()
+        for (addr, data) in l1_dirty
+            .into_iter()
             .chain(l2_dirty.into_iter())
             .chain(l3_dirty.into_iter())
         {
@@ -859,7 +896,8 @@ mod tests {
     #[test]
     fn test_cache_hints() {
         let mut mem = Memory::new();
-        mem.map(0x1000, 4096, Permissions::ReadWriteExecute).unwrap();
+        mem.map(0x1000, 4096, Permissions::ReadWriteExecute)
+            .unwrap();
 
         // Write some data
         mem.write_u8(0x1000, 0x42).unwrap();
@@ -888,7 +926,8 @@ mod tests {
     #[test]
     fn test_write_back_caching() {
         let mut mem = Memory::new();
-        mem.map(0x1000, 4096, Permissions::ReadWriteExecute).unwrap();
+        mem.map(0x1000, 4096, Permissions::ReadWriteExecute)
+            .unwrap();
 
         // Configure L1 cache as write-back
         mem.l1_cache.write_policy = WritePolicy::WriteBack;
@@ -897,7 +936,9 @@ mod tests {
         mem.write_u64(0x1000, 0x1234567890ABCDEF).unwrap();
 
         // Data should be in L1 cache but not in memory yet
-        let cache_line = mem.l1_cache.sets[0].lines.iter()
+        let cache_line = mem.l1_cache.sets[0]
+            .lines
+            .iter()
             .find(|line| line.state == CacheLineState::Modified)
             .unwrap();
         assert!(cache_line.is_dirty());
@@ -909,7 +950,9 @@ mod tests {
         mem.flush_all_caches().unwrap();
 
         // Cache line should no longer be dirty
-        let cache_line = mem.l1_cache.sets[0].lines.iter()
+        let cache_line = mem.l1_cache.sets[0]
+            .lines
+            .iter()
             .find(|line| line.state == CacheLineState::Exclusive)
             .unwrap();
         assert!(!cache_line.is_dirty());
@@ -921,14 +964,16 @@ mod tests {
     #[test]
     fn test_write_back_eviction() {
         let mut mem = Memory::new();
-        mem.map(0x1000, 4096, Permissions::ReadWriteExecute).unwrap();
+        mem.map(0x1000, 4096, Permissions::ReadWriteExecute)
+            .unwrap();
 
         // Configure L1 cache as write-back
         mem.l1_cache.write_policy = WritePolicy::WriteBack;
 
         // Fill cache set with data
-        for i in 0..8 {  // L1 is 8-way associative
-            mem.write_u64(0x1000 + i * 64, i as u64).unwrap();  // Each cache line is 64 bytes
+        for i in 0..8 {
+            // L1 is 8-way associative
+            mem.write_u64(0x1000 + i * 64, i as u64).unwrap(); // Each cache line is 64 bytes
         }
 
         // Write one more value to cause eviction
@@ -941,7 +986,8 @@ mod tests {
     #[test]
     fn test_speculative_loads() {
         let mut mem = Memory::new();
-        mem.map(0x1000, 4096, Permissions::ReadWriteExecute).unwrap();
+        mem.map(0x1000, 4096, Permissions::ReadWriteExecute)
+            .unwrap();
 
         // Write some test data
         mem.write_u64(0x1000, 0x1234567890ABCDEF).unwrap();
@@ -951,18 +997,27 @@ mod tests {
         assert_eq!(status, SpeculativeStatus::Success);
 
         // Check load status
-        assert_eq!(mem.check_speculative_load(0x1000), Some(SpeculativeStatus::Success));
+        assert_eq!(
+            mem.check_speculative_load(0x1000),
+            Some(SpeculativeStatus::Success)
+        );
 
         // Cancel a load
         mem.cancel_speculative_load(0x1000);
-        assert_eq!(mem.check_speculative_load(0x1000), Some(SpeculativeStatus::Cancelled));
+        assert_eq!(
+            mem.check_speculative_load(0x1000),
+            Some(SpeculativeStatus::Cancelled)
+        );
 
         // Track failed load (unmapped memory)
         let status = mem.track_speculative_load(0x2000, 8).unwrap();
         assert_eq!(status, SpeculativeStatus::Failed);
-        assert_eq!(mem.check_speculative_load(0x2000), Some(SpeculativeStatus::Failed));
+        assert_eq!(
+            mem.check_speculative_load(0x2000),
+            Some(SpeculativeStatus::Failed)
+        );
 
         // Check non-existent load
         assert_eq!(mem.check_speculative_load(0x3000), None);
     }
-} 
+}

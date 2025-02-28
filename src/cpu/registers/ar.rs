@@ -124,20 +124,24 @@ pub struct ARFile {
     regs: [u64; NUM_AR],
 }
 
+impl Default for ARFile {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ARFile {
     /// Create new register file
     pub fn new() -> Self {
-        Self {
-            regs: [0; NUM_AR],
-        }
+        Self { regs: [0; NUM_AR] }
     }
 
     /// Read register value
     pub fn read(&self, index: AR) -> Result<u64, EmulatorError> {
         match index {
-            AR::CPUID1 | AR::CPUID2 | AR::CPUID3 | AR::CPUID4 => {
-                Err(EmulatorError::RegisterError("CPUID registers are read-only".to_string()))
-            }
+            AR::CPUID1 | AR::CPUID2 | AR::CPUID3 | AR::CPUID4 => Err(EmulatorError::RegisterError(
+                "CPUID registers are read-only".to_string(),
+            )),
             _ => Ok(self.regs[index as usize]),
         }
     }
@@ -145,9 +149,9 @@ impl ARFile {
     /// Write register value
     pub fn write(&mut self, index: AR, value: u64) -> Result<(), EmulatorError> {
         match index {
-            AR::CPUID1 | AR::CPUID2 | AR::CPUID3 | AR::CPUID4 => {
-                Err(EmulatorError::RegisterError("CPUID registers are read-only".to_string()))
-            }
+            AR::CPUID1 | AR::CPUID2 | AR::CPUID3 | AR::CPUID4 => Err(EmulatorError::RegisterError(
+                "CPUID registers are read-only".to_string(),
+            )),
             _ => {
                 self.regs[index as usize] = value;
                 Ok(())
@@ -174,4 +178,4 @@ impl ARFile {
     pub fn get_fpsr(&self) -> u64 {
         self.read(AR::FPSR).unwrap()
     }
-} 
+}

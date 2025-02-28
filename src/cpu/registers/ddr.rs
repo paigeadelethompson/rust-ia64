@@ -16,19 +16,19 @@ impl DataFields {
     /// Create from raw bits
     pub fn from_bits(bits: u64) -> Self {
         Self {
-            data: bits & 0xFFFF_FFFF_FFFF_FFFF,
+            data: bits,
             mask: (bits >> 56) & 0xFF,
         }
     }
 
     /// Convert to raw bits
     pub fn to_bits(&self) -> u64 {
-        self.data | ((self.mask as u64) << 56)
+        self.data | (self.mask << 56)
     }
 
     /// Check if value matches data pattern
     pub fn matches(&self, value: u64) -> bool {
-        let mask = !((self.mask as u64) << 56);
+        let mask = !(self.mask << 56);
         (value & mask) == (self.data & mask)
     }
 }
@@ -40,20 +40,25 @@ pub struct DDRFile {
     regs: [u64; NUM_DDR],
 }
 
+impl Default for DDRFile {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DDRFile {
     /// Create new register file
     pub fn new() -> Self {
-        Self {
-            regs: [0; NUM_DDR],
-        }
+        Self { regs: [0; NUM_DDR] }
     }
 
     /// Read register value
     pub fn read(&self, index: usize) -> Result<DataFields, EmulatorError> {
         if index >= NUM_DDR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid debug data register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid debug data register index: {}",
+                index
+            )));
         }
         Ok(DataFields::from_bits(self.regs[index]))
     }
@@ -61,9 +66,10 @@ impl DDRFile {
     /// Write register value
     pub fn write(&mut self, index: usize, fields: DataFields) -> Result<(), EmulatorError> {
         if index >= NUM_DDR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid debug data register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid debug data register index: {}",
+                index
+            )));
         }
         self.regs[index] = fields.to_bits();
         Ok(())
@@ -94,9 +100,9 @@ impl DDRFile {
             }
         }
 
-        let index = target_index.ok_or_else(|| EmulatorError::RegisterError(
-            "No free debug data registers".to_string()
-        ))?;
+        let index = target_index.ok_or_else(|| {
+            EmulatorError::RegisterError("No free debug data registers".to_string())
+        })?;
 
         self.write(index, DataFields { data, mask })
     }
@@ -104,13 +110,14 @@ impl DDRFile {
     /// Clear a data match
     pub fn clear_match(&mut self, index: usize) -> Result<(), EmulatorError> {
         if index >= NUM_DDR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid debug data register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid debug data register index: {}",
+                index
+            )));
         }
 
         let mut fields = self.read(index)?;
         fields.mask = 0;
         self.write(index, fields)
     }
-} 
+}

@@ -1,15 +1,15 @@
 //! CPU instruction implementations
-//! 
+//!
 //! This module contains implementations of the IA-64 instruction set.
 
-use crate::EmulatorError;
 use crate::cpu::Cpu;
 use crate::memory::Memory;
+use crate::EmulatorError;
 
 pub mod alu;
-pub mod memory;
 pub mod branch;
 pub mod float;
+pub mod memory;
 pub mod system;
 
 /// Common trait for all instructions
@@ -138,4 +138,4 @@ impl RegisterType {
             RegisterType::DDR(n) => *n as usize,
         }
     }
-} 
+}

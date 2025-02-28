@@ -32,11 +32,11 @@ impl KeyFields {
 
     /// Convert to raw bits
     pub fn to_bits(&self) -> u64 {
-        (self.key as u64) |
-        ((self.v as u64) << 32) |
-        ((self.wd as u64) << 33) |
-        ((self.rd as u64) << 34) |
-        ((self.xd as u64) << 35)
+        (self.key as u64)
+            | ((self.v as u64) << 32)
+            | ((self.wd as u64) << 33)
+            | ((self.rd as u64) << 34)
+            | ((self.xd as u64) << 35)
     }
 
     /// Check if key allows read access
@@ -62,20 +62,25 @@ pub struct PKRFile {
     regs: [u64; NUM_PKR],
 }
 
+impl Default for PKRFile {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PKRFile {
     /// Create new register file
     pub fn new() -> Self {
-        Self {
-            regs: [0; NUM_PKR],
-        }
+        Self { regs: [0; NUM_PKR] }
     }
 
     /// Read register value
     pub fn read(&self, index: usize) -> Result<KeyFields, EmulatorError> {
         if index >= NUM_PKR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid protection key register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid protection key register index: {}",
+                index
+            )));
         }
         Ok(KeyFields::from_bits(self.regs[index]))
     }
@@ -83,9 +88,10 @@ impl PKRFile {
     /// Write register value
     pub fn write(&mut self, index: usize, fields: KeyFields) -> Result<(), EmulatorError> {
         if index >= NUM_PKR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid protection key register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid protection key register index: {}",
+                index
+            )));
         }
         self.regs[index] = fields.to_bits();
         Ok(())
@@ -147,16 +153,19 @@ impl PKRFile {
             }
         }
 
-        let index = target_index.ok_or_else(|| EmulatorError::RegisterError(
-            "No free protection key registers".to_string()
-        ))?;
+        let index = target_index.ok_or_else(|| {
+            EmulatorError::RegisterError("No free protection key registers".to_string())
+        })?;
 
-        self.write(index, KeyFields {
-            key,
-            v: true,
-            wd,
-            rd,
-            xd,
-        })
+        self.write(
+            index,
+            KeyFields {
+                key,
+                v: true,
+                wd,
+                rd,
+                xd,
+            },
+        )
     }
-} 
+}

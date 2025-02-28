@@ -1,5 +1,5 @@
 //! Interrupt and Exception Handling
-//! 
+//!
 //! This module implements the IA-64 interrupt and exception handling system,
 //! including hardware interrupts, software interrupts, faults, and traps.
 
@@ -104,6 +104,12 @@ pub struct InterruptTable {
     handlers: Vec<HandlerEntry>,
 }
 
+impl Default for InterruptTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InterruptTable {
     /// Create new interrupt table
     pub fn new() -> Self {
@@ -119,11 +125,17 @@ impl InterruptTable {
     }
 
     /// Register interrupt handler
-    pub fn register_handler(&mut self, vector: InterruptVector, address: u64, min_privilege: u8) -> Result<(), EmulatorError> {
+    pub fn register_handler(
+        &mut self,
+        vector: InterruptVector,
+        address: u64,
+        min_privilege: u8,
+    ) -> Result<(), EmulatorError> {
         let idx = vector as usize;
         if idx >= self.handlers.len() {
             return Err(EmulatorError::ExecutionError(format!(
-                "Invalid interrupt vector: {}", idx
+                "Invalid interrupt vector: {}",
+                idx
             )));
         }
 
@@ -137,11 +149,16 @@ impl InterruptTable {
     }
 
     /// Enable/disable handler
-    pub fn set_handler_enabled(&mut self, vector: InterruptVector, enabled: bool) -> Result<(), EmulatorError> {
+    pub fn set_handler_enabled(
+        &mut self,
+        vector: InterruptVector,
+        enabled: bool,
+    ) -> Result<(), EmulatorError> {
         let idx = vector as usize;
         if idx >= self.handlers.len() {
             return Err(EmulatorError::ExecutionError(format!(
-                "Invalid interrupt vector: {}", idx
+                "Invalid interrupt vector: {}",
+                idx
             )));
         }
 
@@ -150,11 +167,15 @@ impl InterruptTable {
     }
 
     /// Get handler address
-    pub fn get_handler_address(&self, vector: InterruptVector) -> Result<Option<u64>, EmulatorError> {
+    pub fn get_handler_address(
+        &self,
+        vector: InterruptVector,
+    ) -> Result<Option<u64>, EmulatorError> {
         let idx = vector as usize;
         if idx >= self.handlers.len() {
             return Err(EmulatorError::ExecutionError(format!(
-                "Invalid interrupt vector: {}", idx
+                "Invalid interrupt vector: {}",
+                idx
             )));
         }
 
@@ -182,6 +203,12 @@ pub struct InterruptController {
     interrupts_enabled: bool,
 }
 
+impl Default for InterruptController {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InterruptController {
     /// Create new interrupt controller
     pub fn new() -> Self {
@@ -195,7 +222,12 @@ impl InterruptController {
     }
 
     /// Register interrupt handler
-    pub fn register_handler(&mut self, vector: InterruptVector, address: u64, min_privilege: u8) -> Result<(), EmulatorError> {
+    pub fn register_handler(
+        &mut self,
+        vector: InterruptVector,
+        address: u64,
+        min_privilege: u8,
+    ) -> Result<(), EmulatorError> {
         self.table.register_handler(vector, address, min_privilege)
     }
 
@@ -230,7 +262,7 @@ impl InterruptController {
                 let idx = state.vector as usize;
                 if idx < self.table.handlers.len() {
                     let handler = &self.table.handlers[idx];
-                    
+
                     // Check if handler is enabled and privilege level is sufficient
                     if handler.enabled && (state.psr >> 32) & 0x3 >= handler.min_privilege as u64 {
                         self.current = Some(state);
@@ -300,49 +332,58 @@ mod tests {
     #[test]
     fn test_interrupt_registration() {
         let mut controller = InterruptController::new();
-        
+
         // Register handler
-        assert!(controller.register_handler(
-            InterruptVector::ExtInt,
-            0x1000,
-            0
-        ).is_ok());
-        
+        assert!(controller
+            .register_handler(InterruptVector::ExtInt, 0x1000, 0)
+            .is_ok());
+
         // Check handler address
         assert_eq!(
-            controller.table.get_handler_address(InterruptVector::ExtInt).unwrap(),
+            controller
+                .table
+                .get_handler_address(InterruptVector::ExtInt)
+                .unwrap(),
             Some(0x1000)
         );
 
         // Try registering invalid vector
-        assert!(controller.register_handler(
-            InterruptVector::SingleStepTrap,
-            0x2000,
-            0
-        ).is_ok());
+        assert!(controller
+            .register_handler(InterruptVector::SingleStepTrap, 0x2000, 0)
+            .is_ok());
     }
 
     #[test]
     fn test_interrupt_enable_disable() {
         let mut controller = InterruptController::new();
-        
+
         // Register and enable handler
-        assert!(controller.register_handler(
-            InterruptVector::ExtInt,
-            0x1000,
-            0
-        ).is_ok());
-        
-        assert!(controller.table.set_handler_enabled(InterruptVector::ExtInt, true).is_ok());
+        assert!(controller
+            .register_handler(InterruptVector::ExtInt, 0x1000, 0)
+            .is_ok());
+
+        assert!(controller
+            .table
+            .set_handler_enabled(InterruptVector::ExtInt, true)
+            .is_ok());
         assert_eq!(
-            controller.table.get_handler_address(InterruptVector::ExtInt).unwrap(),
+            controller
+                .table
+                .get_handler_address(InterruptVector::ExtInt)
+                .unwrap(),
             Some(0x1000)
         );
-        
+
         // Disable handler
-        assert!(controller.table.set_handler_enabled(InterruptVector::ExtInt, false).is_ok());
+        assert!(controller
+            .table
+            .set_handler_enabled(InterruptVector::ExtInt, false)
+            .is_ok());
         assert_eq!(
-            controller.table.get_handler_address(InterruptVector::ExtInt).unwrap(),
+            controller
+                .table
+                .get_handler_address(InterruptVector::ExtInt)
+                .unwrap(),
             None
         );
     }
@@ -350,23 +391,19 @@ mod tests {
     #[test]
     fn test_interrupt_handling() {
         let mut controller = InterruptController::new();
-        
+
         // Register handlers
-        assert!(controller.register_handler(
-            InterruptVector::ExtInt,
-            0x1000,
-            0
-        ).is_ok());
-        
-        assert!(controller.register_handler(
-            InterruptVector::DebugFault,
-            0x2000,
-            0
-        ).is_ok());
-        
+        assert!(controller
+            .register_handler(InterruptVector::ExtInt, 0x1000, 0)
+            .is_ok());
+
+        assert!(controller
+            .register_handler(InterruptVector::DebugFault, 0x2000, 0)
+            .is_ok());
+
         // Enable interrupts
         controller.set_interrupts_enabled(true);
-        
+
         // Raise interrupts
         controller.raise_interrupt(InterruptState {
             vector: InterruptVector::ExtInt,
@@ -375,7 +412,7 @@ mod tests {
             bundle: [0; 16],
             info: 0,
         });
-        
+
         controller.raise_interrupt(InterruptState {
             vector: InterruptVector::DebugFault,
             ip: 0x200,
@@ -383,18 +420,18 @@ mod tests {
             bundle: [0; 16],
             info: 0,
         });
-        
+
         // Check interrupt handling
         assert_eq!(controller.check_interrupts(), Some(0x2000));
         assert_eq!(controller.nesting_level(), 1);
-        
+
         assert_eq!(controller.check_interrupts(), Some(0x1000));
         assert_eq!(controller.nesting_level(), 2);
-        
+
         // Return from interrupts
         assert_eq!(controller.return_from_interrupt(), Some(0x2000));
         assert_eq!(controller.nesting_level(), 1);
-        
+
         assert_eq!(controller.return_from_interrupt(), None);
         assert_eq!(controller.nesting_level(), 0);
     }
@@ -402,16 +439,14 @@ mod tests {
     #[test]
     fn test_interrupt_privilege_levels() {
         let mut controller = InterruptController::new();
-        
+
         // Register handler with minimum privilege level
-        assert!(controller.register_handler(
-            InterruptVector::ExtInt,
-            0x1000,
-            2
-        ).is_ok());
-        
+        assert!(controller
+            .register_handler(InterruptVector::ExtInt, 0x1000, 2)
+            .is_ok());
+
         controller.set_interrupts_enabled(true);
-        
+
         // Try to handle interrupt with insufficient privilege
         controller.raise_interrupt(InterruptState {
             vector: InterruptVector::ExtInt,
@@ -420,9 +455,9 @@ mod tests {
             bundle: [0; 16],
             info: 0,
         });
-        
+
         assert_eq!(controller.check_interrupts(), None);
-        
+
         // Try with sufficient privilege
         controller.raise_interrupt(InterruptState {
             vector: InterruptVector::ExtInt,
@@ -431,23 +466,21 @@ mod tests {
             bundle: [0; 16],
             info: 0,
         });
-        
+
         assert_eq!(controller.check_interrupts(), Some(0x1000));
     }
 
     #[test]
     fn test_interrupt_state_management() {
         let mut controller = InterruptController::new();
-        
+
         // Register handler
-        assert!(controller.register_handler(
-            InterruptVector::ExtInt,
-            0x1000,
-            0
-        ).is_ok());
-        
+        assert!(controller
+            .register_handler(InterruptVector::ExtInt, 0x1000, 0)
+            .is_ok());
+
         controller.set_interrupts_enabled(true);
-        
+
         // Raise interrupt
         let state = InterruptState {
             vector: InterruptVector::ExtInt,
@@ -457,10 +490,10 @@ mod tests {
             info: 42,
         };
         controller.raise_interrupt(state.clone());
-        
+
         // Handle interrupt
         assert_eq!(controller.check_interrupts(), Some(0x1000));
-        
+
         // Check current state
         let current = controller.current_interrupt().unwrap();
         assert_eq!(current.vector, state.vector);
@@ -472,22 +505,18 @@ mod tests {
     #[test]
     fn test_nested_interrupts() {
         let mut controller = InterruptController::new();
-        
+
         // Register handlers
-        assert!(controller.register_handler(
-            InterruptVector::ExtInt,
-            0x1000,
-            0
-        ).is_ok());
-        
-        assert!(controller.register_handler(
-            InterruptVector::DebugFault,
-            0x2000,
-            0
-        ).is_ok());
-        
+        assert!(controller
+            .register_handler(InterruptVector::ExtInt, 0x1000, 0)
+            .is_ok());
+
+        assert!(controller
+            .register_handler(InterruptVector::DebugFault, 0x2000, 0)
+            .is_ok());
+
         controller.set_interrupts_enabled(true);
-        
+
         // Raise first interrupt
         controller.raise_interrupt(InterruptState {
             vector: InterruptVector::ExtInt,
@@ -496,11 +525,11 @@ mod tests {
             bundle: [0; 16],
             info: 0,
         });
-        
+
         // Handle first interrupt
         assert_eq!(controller.check_interrupts(), Some(0x1000));
         assert_eq!(controller.nesting_level(), 1);
-        
+
         // Raise nested interrupt
         controller.raise_interrupt(InterruptState {
             vector: InterruptVector::DebugFault,
@@ -509,17 +538,17 @@ mod tests {
             bundle: [0; 16],
             info: 0,
         });
-        
+
         // Handle nested interrupt
         assert_eq!(controller.check_interrupts(), Some(0x2000));
         assert_eq!(controller.nesting_level(), 2);
-        
+
         // Return from nested interrupt
         assert_eq!(controller.return_from_interrupt(), Some(0x1000));
         assert_eq!(controller.nesting_level(), 1);
-        
+
         // Return from first interrupt
         assert_eq!(controller.return_from_interrupt(), None);
         assert_eq!(controller.nesting_level(), 0);
     }
-} 
+}

@@ -1,10 +1,10 @@
 //! Register Stack Engine (RSE)
-//! 
+//!
 //! This module implements the IA-64 Register Stack Engine, which manages
 //! the register stack and performs register renaming.
 
-use crate::EmulatorError;
 use crate::memory::Memory;
+use crate::EmulatorError;
 
 /// Size of each register frame in bytes (512 bytes = 64 registers * 8 bytes)
 const FRAME_SIZE: u64 = 512;
@@ -58,7 +58,9 @@ impl BackingStore {
     fn advance(&mut self, size: u64) -> Result<(), EmulatorError> {
         let new_top = self.top + size;
         if new_top > self.limit {
-            return Err(EmulatorError::ExecutionError("Backing store overflow".to_string()));
+            return Err(EmulatorError::ExecutionError(
+                "Backing store overflow".to_string(),
+            ));
         }
         self.top = new_top;
         Ok(())
@@ -142,10 +144,10 @@ impl RSEConfig {
             LoadStoreOrder::Release => 1,
         };
 
-        (mode_bits << 16) |
-        (order_bit << 18) |
-        ((self.store_intensity as u64) << 19) |
-        ((self.load_intensity as u64) << 23)
+        (mode_bits << 16)
+            | (order_bit << 18)
+            | ((self.store_intensity as u64) << 19)
+            | ((self.load_intensity as u64) << 23)
     }
 }
 
@@ -166,6 +168,12 @@ pub struct RSE {
     invalid_count: u32,
     /// NaT collection bits
     rnat: u64,
+}
+
+impl Default for RSE {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RSE {
@@ -208,15 +216,21 @@ impl RSE {
     }
 
     /// Spill registers to backing store
-    pub fn spill_registers(&mut self, memory: &mut Memory, count: u32) -> Result<(), EmulatorError> {
+    pub fn spill_registers(
+        &mut self,
+        memory: &mut Memory,
+        count: u32,
+    ) -> Result<(), EmulatorError> {
         if count > self.dirty_count {
-            return Err(EmulatorError::RSEError("Not enough dirty registers to spill".to_string()));
+            return Err(EmulatorError::RSEError(
+                "Not enough dirty registers to spill".to_string(),
+            ));
         }
 
         for _ in 0..count {
             // Write register value to memory
             memory.write_u64(self.bspstore, 0)?; // TODO: Get actual register value
-            
+
             // Update RNAT if needed
             if (self.bspstore >> 3) & 0x3F == 0x3F {
                 memory.write_u64(self.bspstore + 8, self.rnat)?;
@@ -235,16 +249,18 @@ impl RSE {
     /// Fill registers from backing store
     pub fn fill_registers(&mut self, memory: &mut Memory, count: u32) -> Result<(), EmulatorError> {
         if count > self.invalid_count {
-            return Err(EmulatorError::RSEError("Not enough invalid registers to fill".to_string()));
+            return Err(EmulatorError::RSEError(
+                "Not enough invalid registers to fill".to_string(),
+            ));
         }
 
         for _ in 0..count {
             // Read register value from memory
             let value = memory.read_u64(self.bsp)?;
-            
+
             // Check if we need to read RNAT
             let nat_bit = (self.rnat >> ((self.bsp >> 3) & 0x3F)) & 1 != 0;
-            
+
             // Update BSP
             if (self.bsp >> 3) & 0x3F == 0x3F {
                 self.rnat = memory.read_u64(self.bsp + 8)?;
@@ -272,7 +288,11 @@ impl RSE {
     }
 
     /// Handle register allocation
-    pub fn allocate_registers(&mut self, memory: &mut Memory, count: u32) -> Result<(), EmulatorError> {
+    pub fn allocate_registers(
+        &mut self,
+        memory: &mut Memory,
+        count: u32,
+    ) -> Result<(), EmulatorError> {
         // First, try to use clean registers
         let clean_to_use = count.min(self.clean_count);
         if clean_to_use > 0 {
@@ -284,7 +304,9 @@ impl RSE {
         let remaining = count - clean_to_use;
         if remaining > 0 {
             if remaining > self.invalid_count {
-                return Err(EmulatorError::RSEError("Not enough registers available".to_string()));
+                return Err(EmulatorError::RSEError(
+                    "Not enough registers available".to_string(),
+                ));
             }
             self.invalid_count -= remaining;
             self.dirty_count += remaining;
@@ -294,12 +316,18 @@ impl RSE {
     }
 
     /// Handle register deallocation
-    pub fn deallocate_registers(&mut self, memory: &mut Memory, count: u32) -> Result<(), EmulatorError> {
+    pub fn deallocate_registers(
+        &mut self,
+        memory: &mut Memory,
+        count: u32,
+    ) -> Result<(), EmulatorError> {
         match self.config.mode {
             RSEMode::Lazy => {
                 // Just mark registers as invalid
                 self.dirty_count = self.dirty_count.saturating_sub(count);
-                self.clean_count = self.clean_count.saturating_sub(count.saturating_sub(self.dirty_count));
+                self.clean_count = self
+                    .clean_count
+                    .saturating_sub(count.saturating_sub(self.dirty_count));
                 self.invalid_count += count;
             }
             RSEMode::Eager => {
@@ -319,7 +347,9 @@ impl RSE {
             RSEMode::Enforced => {
                 // Similar to eager mode but must spill all registers
                 self.spill_registers(memory, self.dirty_count)?;
-                self.clean_count = self.clean_count.saturating_sub(count.saturating_sub(self.dirty_count));
+                self.clean_count = self
+                    .clean_count
+                    .saturating_sub(count.saturating_sub(self.dirty_count));
                 self.invalid_count += count;
             }
         }
@@ -336,17 +366,17 @@ mod tests {
     #[test]
     fn test_rse_config() {
         let mut rse = RSE::new();
-        
+
         let config = RSEConfig {
             mode: RSEMode::Eager,
             load_store_order: LoadStoreOrder::Release,
             store_intensity: 7,
             load_intensity: 4,
         };
-        
+
         rse.set_config(config);
         let read_config = rse.get_config();
-        
+
         assert_eq!(read_config.mode, RSEMode::Eager);
         assert_eq!(read_config.load_store_order, LoadStoreOrder::Release);
         assert_eq!(read_config.store_intensity, 7);
@@ -358,14 +388,14 @@ mod tests {
     fn test_rse_spill() {
         let mut rse = RSE::new();
         let mut memory = Memory::new();
-        
+
         // Set up initial state
         rse.dirty_count = 10;
         rse.bspstore = 0x1000;
-        
+
         // Spill 5 registers
         assert!(rse.spill_registers(&mut memory, 5).is_ok());
-        
+
         // Check state after spill
         assert_eq!(rse.dirty_count, 5);
         assert_eq!(rse.clean_count, 5);
@@ -377,14 +407,14 @@ mod tests {
     fn test_rse_fill() {
         let mut rse = RSE::new();
         let mut memory = Memory::new();
-        
+
         // Set up initial state
         rse.invalid_count = 10;
         rse.bsp = 0x1000;
-        
+
         // Fill 5 registers
         assert!(rse.fill_registers(&mut memory, 5).is_ok());
-        
+
         // Check state after fill
         assert_eq!(rse.invalid_count, 5);
         assert_eq!(rse.clean_count, 5);
@@ -395,14 +425,14 @@ mod tests {
     fn test_rse_allocation() {
         let mut rse = RSE::new();
         let mut memory = Memory::new();
-        
+
         // Set up initial state
         rse.clean_count = 5;
         rse.invalid_count = 10;
-        
+
         // Allocate 8 registers
         assert!(rse.allocate_registers(&mut memory, 8).is_ok());
-        
+
         // Check state after allocation
         assert_eq!(rse.clean_count, 0);
         assert_eq!(rse.dirty_count, 8);
@@ -414,11 +444,11 @@ mod tests {
     fn test_rse_deallocation() {
         let mut rse = RSE::new();
         let mut memory = Memory::new();
-        
+
         // Set up initial state
         rse.dirty_count = 5;
         rse.clean_count = 5;
-        
+
         // Configure eager mode
         rse.set_config(RSEConfig {
             mode: RSEMode::Eager,
@@ -426,10 +456,10 @@ mod tests {
             store_intensity: 0,
             load_intensity: 0,
         });
-        
+
         // Deallocate 8 registers
         assert!(rse.deallocate_registers(&mut memory, 8).is_ok());
-        
+
         // Check state after deallocation
         assert_eq!(rse.dirty_count, 0);
         assert_eq!(rse.clean_count, 2);
@@ -441,17 +471,17 @@ mod tests {
     fn test_rse_rnat() {
         let mut rse = RSE::new();
         let mut memory = Memory::new();
-        
+
         // Set up initial state with dirty registers
         rse.dirty_count = 63;
         rse.bspstore = 0x1000;
-        
+
         // Spill registers to trigger RNAT write
         assert!(rse.spill_registers(&mut memory, 63).is_ok());
-        
+
         // Check RNAT was written
         assert_eq!(rse.bspstore, 0x1000 + 64 * 8); // 63 registers + 1 RNAT
-        
+
         // Read back RNAT value
         let rnat = memory.read_u64(0x1000 + 63 * 8).unwrap();
         assert_eq!(rnat, 0); // Should be 0 since we didn't set any NaT bits
@@ -462,14 +492,14 @@ mod tests {
     fn test_rse_flush() {
         let mut rse = RSE::new();
         let mut memory = Memory::new();
-        
+
         // Set up initial state
         rse.dirty_count = 10;
         rse.bspstore = 0x1000;
-        
+
         // Flush all dirty registers
         assert!(rse.flush(&mut memory).is_ok());
-        
+
         // Check state after flush
         assert_eq!(rse.dirty_count, 0);
         assert_eq!(rse.clean_count, 10);
@@ -479,15 +509,15 @@ mod tests {
     #[test]
     fn test_rse_invalidate() {
         let mut rse = RSE::new();
-        
+
         // Set up initial state
         rse.clean_count = 10;
-        
+
         // Invalidate clean registers
         rse.invalidate();
-        
+
         // Check state after invalidation
         assert_eq!(rse.clean_count, 0);
         assert_eq!(rse.invalid_count, 10);
     }
-} 
+}

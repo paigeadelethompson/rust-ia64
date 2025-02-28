@@ -1,13 +1,13 @@
 //! System Call Interface
-//! 
+//!
 //! This module implements the IA-64 system call interface, handling transitions
 //! between user and kernel mode, parameter passing, and system service dispatching.
 
-use crate::EmulatorError;
 use super::Cpu;
+use crate::EmulatorError;
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt;
-use std::collections::HashMap;
 use std::hash::Hash;
 
 /// System call numbers
@@ -108,7 +108,10 @@ impl TryFrom<u64> for SyscallNumber {
             100 => Ok(Self::Send),
             101 => Ok(Self::Recv),
             102 => Ok(Self::Shutdown),
-            _ => Err(EmulatorError::ExecutionError(format!("Invalid system call number: {}", value))),
+            _ => Err(EmulatorError::ExecutionError(format!(
+                "Invalid system call number: {}",
+                value
+            ))),
         }
     }
 }
@@ -182,6 +185,12 @@ pub struct SyscallTable {
     handlers: Vec<Option<SyscallHandler>>,
 }
 
+impl Default for SyscallTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SyscallTable {
     /// Create new system call table
     pub fn new() -> Self {
@@ -213,7 +222,10 @@ impl SyscallTable {
 
 /// System call manager
 pub struct SyscallManager {
-    handlers: HashMap<SyscallNumber, Box<dyn Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + Send + Sync>>,
+    handlers: HashMap<
+        SyscallNumber,
+        Box<dyn Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + Send + Sync>,
+    >,
     pub(crate) current: Option<SyscallContext>,
 }
 
@@ -245,7 +257,7 @@ impl SyscallManager {
     }
 
     /// Register a handler for a system call
-    /// 
+    ///
     /// # Arguments
     /// * `number` - The system call number to register the handler for
     /// * `handler` - The handler function to call when the system call is executed
@@ -257,20 +269,29 @@ impl SyscallManager {
     }
 
     /// Get the handler for a system call
-    /// 
+    ///
     /// # Arguments
     /// * `number` - The system call number to get the handler for
-    /// 
+    ///
     /// # Returns
     /// * `Some(handler)` if a handler is registered for the system call
     /// * `None` if no handler is registered for the system call
-    pub fn get_handler(&self, number: SyscallNumber) -> Option<impl Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + '_> {
+    pub fn get_handler(
+        &self,
+        number: SyscallNumber,
+    ) -> Option<impl Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + '_> {
         self.handlers.get(&number).map(|h| h.as_ref())
     }
 
     /// Execute system call
-    pub fn execute_syscall(&mut self, cpu: &mut Cpu, context: &mut SyscallContext) -> Result<(), EmulatorError> {
-        let handler = self.handlers.get(&context.number)
+    pub fn execute_syscall(
+        &mut self,
+        cpu: &mut Cpu,
+        context: &mut SyscallContext,
+    ) -> Result<(), EmulatorError> {
+        let handler = self
+            .handlers
+            .get(&context.number)
             .ok_or(EmulatorError::InvalidSyscall)?;
         let handler = handler.as_ref();
         handler(cpu, context)
@@ -311,25 +332,25 @@ impl SyscallManager {
 
     /// Initialize default handlers
     pub fn init_default_handlers(&mut self) {
-        self.register_handler(SyscallNumber::Exit, |cpu, ctx| Self::handle_exit(cpu, ctx));
-        self.register_handler(SyscallNumber::Write, |cpu, ctx| Self::handle_write(cpu, ctx));
-        self.register_handler(SyscallNumber::Read, |cpu, ctx| Self::handle_read(cpu, ctx));
-        self.register_handler(SyscallNumber::GetPid, |cpu, ctx| Self::handle_getpid(cpu, ctx));
+        self.register_handler(SyscallNumber::Exit, Self::handle_exit);
+        self.register_handler(SyscallNumber::Write, Self::handle_write);
+        self.register_handler(SyscallNumber::Read, Self::handle_read);
+        self.register_handler(SyscallNumber::GetPid, Self::handle_getpid);
     }
 
     /// Begins a system call by creating a new context and loading parameters from registers
-    /// 
+    ///
     /// # Arguments
     /// * `cpu` - Reference to the CPU state to read parameters from
     /// * `syscall_num` - The system call number
-    /// 
+    ///
     /// # Returns
     /// * `Ok(())` if the system call was started successfully
     /// * `Err(EmulatorError::InvalidSyscall)` if the syscall number is invalid
     pub fn begin_syscall(&mut self, cpu: &Cpu, syscall_num: u64) -> Result<(), EmulatorError> {
         // Convert syscall number to enum
-        let syscall = SyscallNumber::try_from(syscall_num)
-            .map_err(|_| EmulatorError::InvalidSyscall)?;
+        let syscall =
+            SyscallNumber::try_from(syscall_num).map_err(|_| EmulatorError::InvalidSyscall)?;
 
         // Create context
         let mut context = SyscallContext::new(syscall);
@@ -344,16 +365,15 @@ impl SyscallManager {
     }
 
     /// Ends a system call by setting return values in registers
-    /// 
+    ///
     /// # Arguments
     /// * `cpu` - Mutable reference to the CPU state to write return values to
-    /// 
+    ///
     /// # Returns
     /// * `Ok(())` if the system call was ended successfully
     /// * `Err(EmulatorError::NoSyscallContext)` if there is no active system call
     pub fn end_syscall(&mut self, cpu: &mut Cpu) -> Result<(), EmulatorError> {
-        let context = self.current.take()
-            .ok_or(EmulatorError::NoSyscallContext)?;
+        let context = self.current.take().ok_or(EmulatorError::NoSyscallContext)?;
 
         // Set return value
         cpu.gr[SYSCALL_RETURN_REGS[0]] = context.returns[0];
@@ -382,20 +402,20 @@ mod tests {
     #[test]
     fn test_syscall_context() {
         let mut context = SyscallContext::new(SyscallNumber::Write);
-        
+
         // Set parameters
         context.set_param(0, 1); // fd
         context.set_param(1, 0x1000); // buffer
         context.set_param(2, 100); // count
-        
+
         // Check parameters
         assert_eq!(context.get_param(0), Some(1));
         assert_eq!(context.get_param(1), Some(0x1000));
         assert_eq!(context.get_param(2), Some(100));
-        
+
         // Set return value
         context.set_return(0, 100);
-        
+
         // Set error
         context.set_error(0);
     }
@@ -404,17 +424,21 @@ mod tests {
     fn test_syscall_manager() {
         let mut cpu = Cpu::new();
         let mut manager = SyscallManager::new();
-        
+
         // Register handlers
         manager.init_default_handlers();
-        
+
         // Begin syscall
-        assert!(manager.begin_syscall(&cpu, SyscallNumber::Write as u64).is_ok());
-        
+        assert!(manager
+            .begin_syscall(&cpu, SyscallNumber::Write as u64)
+            .is_ok());
+
         // Execute syscall
-        assert!(manager.execute_syscall(&mut cpu, &mut SyscallContext::new(SyscallNumber::Write)).is_ok());
-        
+        assert!(manager
+            .execute_syscall(&mut cpu, &mut SyscallContext::new(SyscallNumber::Write))
+            .is_ok());
+
         // End syscall
         assert!(manager.end_syscall(&mut cpu).is_ok());
     }
-} 
+}

@@ -1,7 +1,7 @@
 /// IA-64 instruction format definitions
 
 /// A-type instruction format (ALU)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct AFormat {
     /// Predicate register (qp) [0:5]
     pub predicate: u8,
@@ -22,7 +22,7 @@ pub struct AFormat {
 }
 
 /// I-type instruction format (Integer)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct IFormat {
     /// Predicate register (qp) [0:5]
     pub predicate: u8,
@@ -39,7 +39,7 @@ pub struct IFormat {
 }
 
 /// M-type instruction format (Memory)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct MFormat {
     /// Predicate register (qp) [0:5]
     pub predicate: u8,
@@ -60,7 +60,7 @@ pub struct MFormat {
 }
 
 /// F-type instruction format (Floating-point)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct FFormat {
     /// Predicate register (qp) [0:5]
     pub predicate: u8,
@@ -79,7 +79,7 @@ pub struct FFormat {
 }
 
 /// B-type instruction format (Branch)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct BFormat {
     /// Predicate register (qp) [0:5]
     pub predicate: u8,
@@ -98,7 +98,7 @@ pub struct BFormat {
 }
 
 /// X-type instruction format (Extended)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct XFormat {
     /// Major opcode [0:7]
     pub major_opcode: u8,
@@ -111,7 +111,7 @@ pub struct XFormat {
 }
 
 /// L-type instruction format (Long immediate)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct LFormat {
     /// Template [0:4]
     pub template: u8,
@@ -216,94 +216,3 @@ impl LFormat {
         }
     }
 }
-
-impl Default for AFormat {
-    fn default() -> Self {
-        Self {
-            predicate: 0,
-            major_opcode: 0,
-            x2: 0,
-            ve: false,
-            x4: 0,
-            r2: 0,
-            r3: 0,
-            r1: 0,
-        }
-    }
-}
-
-impl Default for IFormat {
-    fn default() -> Self {
-        Self {
-            predicate: 0,
-            major_opcode: 0,
-            x2: 0,
-            imm8: 0,
-            r2: 0,
-            r1: 0,
-        }
-    }
-}
-
-impl Default for MFormat {
-    fn default() -> Self {
-        Self {
-            predicate: 0,
-            major_opcode: 0,
-            x2: 0,
-            hint: 0,
-            x4: 0,
-            r3: 0,
-            r1: 0,
-            imm7: 0,
-        }
-    }
-}
-
-impl Default for FFormat {
-    fn default() -> Self {
-        Self {
-            predicate: 0,
-            major_opcode: 0,
-            x2: 0,
-            f2: 0,
-            f3: 0,
-            f1: 0,
-            sf: false,
-        }
-    }
-}
-
-impl Default for BFormat {
-    fn default() -> Self {
-        Self {
-            predicate: 0,
-            major_opcode: 0,
-            btype: 0,
-            wh: 0,
-            d: false,
-            imm20: 0,
-            p: 0,
-        }
-    }
-}
-
-impl Default for XFormat {
-    fn default() -> Self {
-        Self {
-            major_opcode: 0,
-            x2: 0,
-            ve: false,
-            imm27: 0,
-        }
-    }
-}
-
-impl Default for LFormat {
-    fn default() -> Self {
-        Self {
-            template: 0,
-            imm41: 0,
-        }
-    }
-} 

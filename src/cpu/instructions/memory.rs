@@ -1,11 +1,11 @@
 //! Memory (M-type) instruction implementations
-//! 
+//!
 //! This module implements the memory access instructions for the IA-64 architecture.
 
-use super::{Instruction, InstructionFields, RegisterType, AddressingMode};
-use crate::EmulatorError;
+use super::{AddressingMode, Instruction, InstructionFields, RegisterType};
 use crate::cpu::Cpu;
 use crate::memory::Memory;
+use crate::EmulatorError;
 
 /// Memory ordering completers
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -116,8 +116,8 @@ pub struct Prefetch {
 impl Load {
     /// Create new LOAD instruction
     pub fn new(fields: InstructionFields, size: LoadSize) -> Self {
-        Self { 
-            fields, 
+        Self {
+            fields,
             size,
             ordering: MemoryOrdering::None,
             cache_hint: CacheHint::Normal,
@@ -126,7 +126,11 @@ impl Load {
     }
 
     /// Create new LOAD instruction with completers
-    pub fn from_decoded(fields: InstructionFields, size: LoadSize, completers: Option<Vec<String>>) -> Self {
+    pub fn from_decoded(
+        fields: InstructionFields,
+        size: LoadSize,
+        completers: Option<Vec<String>>,
+    ) -> Self {
         let mut load = Self::new(fields, size);
 
         // Parse completers if present
@@ -147,7 +151,7 @@ impl Load {
                     "c.nc" => load.speculation = MemorySpeculation::CheckNoClr,
                     "c.clr" => load.speculation = MemorySpeculation::CheckClr,
                     "" => (), // Skip empty completers
-                    _ => (), // Ignore unknown completers
+                    _ => (),  // Ignore unknown completers
                 }
             }
         }
@@ -158,18 +162,16 @@ impl Load {
     /// Calculate effective address
     fn calc_effective_address(&self, cpu: &Cpu) -> Result<u64, EmulatorError> {
         match self.fields.addressing.unwrap() {
-            AddressingMode::Indirect(reg) => {
-                cpu.get_gr(reg as usize)
-            },
+            AddressingMode::Indirect(reg) => cpu.get_gr(reg as usize),
             AddressingMode::IndirectOffset(reg, offset) => {
                 let base = cpu.get_gr(reg as usize)?;
                 Ok(base.wrapping_add(offset as u64))
-            },
+            }
             AddressingMode::IndirectIndex(base, index) => {
                 let base_val = cpu.get_gr(base as usize)?;
                 let index_val = cpu.get_gr(index as usize)?;
                 Ok(base_val.wrapping_add(index_val))
-            },
+            }
             AddressingMode::Absolute(addr) => Ok(addr),
         }
     }
@@ -207,7 +209,11 @@ impl Instruction for Load {
                 // Add entry to ALAT
                 let reg = match self.fields.destinations[0] {
                     RegisterType::GR(reg) => reg,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid destination register type".to_string(),
+                        ))
+                    }
                 };
                 cpu.alat_add_entry(addr, self.size as u64, reg as u32, true)?;
             }
@@ -215,7 +221,11 @@ impl Instruction for Load {
                 // Check ALAT for entry
                 let reg = match self.fields.destinations[0] {
                     RegisterType::GR(reg) => reg,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid destination register type".to_string(),
+                        ))
+                    }
                 };
                 if !cpu.alat_check_register(reg as u32, true) {
                     // No valid entry found, handle recovery
@@ -223,7 +233,7 @@ impl Instruction for Load {
                 }
                 // Clear ALAT entry if requested
                 if matches!(self.speculation, MemorySpeculation::CheckClr) {
-                    cpu.alat_invalidate_overlap(addr, self.size as u64);  // Invalidate based on memory address
+                    cpu.alat_invalidate_overlap(addr, self.size as u64); // Invalidate based on memory address
                 }
             }
             _ => (), // Normal load
@@ -254,7 +264,11 @@ impl Instruction for Load {
         // Write to destination register
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, value)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -286,8 +300,8 @@ pub enum StoreSize {
 impl Store {
     /// Create new STORE instruction
     pub fn new(fields: InstructionFields, size: StoreSize) -> Self {
-        Self { 
-            fields, 
+        Self {
+            fields,
             size,
             ordering: MemoryOrdering::None,
             cache_hint: CacheHint::Normal,
@@ -295,7 +309,11 @@ impl Store {
     }
 
     /// Create new STORE instruction with completers
-    pub fn from_decoded(fields: InstructionFields, size: StoreSize, completers: Option<Vec<String>>) -> Self {
+    pub fn from_decoded(
+        fields: InstructionFields,
+        size: StoreSize,
+        completers: Option<Vec<String>>,
+    ) -> Self {
         let mut store = Self::new(fields, size);
 
         // Parse completers if present
@@ -311,7 +329,7 @@ impl Store {
                     "nta" => store.cache_hint = CacheHint::NonTemporalAll,
                     "bias" => store.cache_hint = CacheHint::Bias,
                     "" => (), // Skip empty completers
-                    _ => (), // Ignore unknown completers
+                    _ => (),  // Ignore unknown completers
                 }
             }
         }
@@ -322,18 +340,16 @@ impl Store {
     /// Calculate effective address
     fn calc_effective_address(&self, cpu: &Cpu) -> Result<u64, EmulatorError> {
         match self.fields.addressing.unwrap() {
-            AddressingMode::Indirect(reg) => {
-                cpu.get_gr(reg as usize)
-            },
+            AddressingMode::Indirect(reg) => cpu.get_gr(reg as usize),
             AddressingMode::IndirectOffset(reg, offset) => {
                 let base = cpu.get_gr(reg as usize)?;
                 Ok(base.wrapping_add(offset as u64))
-            },
+            }
             AddressingMode::IndirectIndex(base, index) => {
                 let base_val = cpu.get_gr(base as usize)?;
                 let index_val = cpu.get_gr(index as usize)?;
                 Ok(base_val.wrapping_add(index_val))
-            },
+            }
             AddressingMode::Absolute(addr) => Ok(addr),
         }
     }
@@ -349,7 +365,11 @@ impl Instruction for Store {
         // Get value to store
         let value = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Calculate effective address
@@ -393,7 +413,7 @@ impl Instruction for Store {
         // Invalidate any overlapping ALAT entries
         for reg in &self.fields.destinations {
             if let RegisterType::GR(reg) = reg {
-                cpu.alat_invalidate_overlap((*reg as u64) << 3, 8);  // 8 bytes for 64-bit register
+                cpu.alat_invalidate_overlap((*reg as u64) << 3, 8); // 8 bytes for 64-bit register
             }
         }
 
@@ -414,7 +434,12 @@ impl Semaphore {
     }
 
     /// Create new semaphore instruction with completers
-    pub fn from_decoded(fields: InstructionFields, op: SemaphoreOp, size: LoadSize, completers: Option<Vec<String>>) -> Self {
+    pub fn from_decoded(
+        fields: InstructionFields,
+        op: SemaphoreOp,
+        size: LoadSize,
+        completers: Option<Vec<String>>,
+    ) -> Self {
         let mut sem = Self::new(fields, op, size);
 
         // Parse completers if present
@@ -430,7 +455,7 @@ impl Semaphore {
                     "nta" => sem.cache_hint = CacheHint::NonTemporalAll,
                     "bias" => sem.cache_hint = CacheHint::Bias,
                     "" => (), // Skip empty completers
-                    _ => (), // Ignore unknown completers
+                    _ => (),  // Ignore unknown completers
                 }
             }
         }
@@ -441,18 +466,16 @@ impl Semaphore {
     /// Calculate effective address
     fn calc_effective_address(&self, cpu: &Cpu) -> Result<u64, EmulatorError> {
         match self.fields.addressing.unwrap() {
-            AddressingMode::Indirect(reg) => {
-                cpu.get_gr(reg as usize)
-            },
+            AddressingMode::Indirect(reg) => cpu.get_gr(reg as usize),
             AddressingMode::IndirectOffset(reg, offset) => {
                 let base = cpu.get_gr(reg as usize)?;
                 Ok(base.wrapping_add(offset as u64))
-            },
+            }
             AddressingMode::IndirectIndex(base, index) => {
                 let base_val = cpu.get_gr(base as usize)?;
                 let index_val = cpu.get_gr(index as usize)?;
                 Ok(base_val.wrapping_add(index_val))
-            },
+            }
             AddressingMode::Absolute(addr) => Ok(addr),
         }
     }
@@ -479,13 +502,21 @@ impl Instruction for Semaphore {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Get destination register
         let dst = match self.fields.destinations[0] {
             RegisterType::GR(reg) => reg as usize,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         };
 
         // Perform atomic operation
@@ -514,7 +545,11 @@ impl Instruction for Semaphore {
                 // Get compare value from second source register
                 let src2 = match self.fields.sources[1] {
                     RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-                    _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+                    _ => {
+                        return Err(EmulatorError::ExecutionError(
+                            "Invalid source register type".to_string(),
+                        ))
+                    }
                 };
 
                 // Read current value
@@ -598,7 +633,11 @@ impl Prefetch {
     }
 
     /// Create new prefetch instruction with completers
-    pub fn from_decoded(fields: InstructionFields, prefetch_type: PrefetchType, completers: Option<Vec<String>>) -> Self {
+    pub fn from_decoded(
+        fields: InstructionFields,
+        prefetch_type: PrefetchType,
+        completers: Option<Vec<String>>,
+    ) -> Self {
         let mut prefetch = Self::new(fields, prefetch_type);
 
         // Parse completers if present
@@ -610,7 +649,7 @@ impl Prefetch {
                     "nta" => prefetch.cache_hint = CacheHint::NonTemporalAll,
                     "bias" => prefetch.cache_hint = CacheHint::Bias,
                     "" => (), // Skip empty completers
-                    _ => (), // Ignore unknown completers
+                    _ => (),  // Ignore unknown completers
                 }
             }
         }
@@ -621,18 +660,16 @@ impl Prefetch {
     /// Calculate effective address
     fn calc_effective_address(&self, cpu: &Cpu) -> Result<u64, EmulatorError> {
         match self.fields.addressing.unwrap() {
-            AddressingMode::Indirect(reg) => {
-                cpu.get_gr(reg as usize)
-            },
+            AddressingMode::Indirect(reg) => cpu.get_gr(reg as usize),
             AddressingMode::IndirectOffset(reg, offset) => {
                 let base = cpu.get_gr(reg as usize)?;
                 Ok(base.wrapping_add(offset as u64))
-            },
+            }
             AddressingMode::IndirectIndex(base, index) => {
                 let base_val = cpu.get_gr(base as usize)?;
                 let index_val = cpu.get_gr(index as usize)?;
                 Ok(base_val.wrapping_add(index_val))
-            },
+            }
             AddressingMode::Absolute(addr) => Ok(addr),
         }
     }
@@ -696,11 +733,13 @@ mod tests {
     fn setup_test() -> (Cpu, Memory, InstructionFields) {
         let mut cpu = Cpu::new();
         let mut memory = Memory::new();
-        memory.map(0x1000, 4096, Permissions::ReadWriteExecute).unwrap();
-        
+        memory
+            .map(0x1000, 4096, Permissions::ReadWriteExecute)
+            .unwrap();
+
         // Initialize predicate registers
         cpu.set_pr(0, true).unwrap(); // Set p0 to true by default
-        
+
         let fields = InstructionFields {
             qp: 0,
             major_op: 0,
@@ -715,38 +754,34 @@ mod tests {
     #[test]
     fn test_load_completers() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test load with memory ordering completers
-        let completers = Some(vec![
-            "acq".to_string(),
-            "nt1".to_string(),
-            "s".to_string(),
-        ]);
-        
+        let completers = Some(vec!["acq".to_string(), "nt1".to_string(), "s".to_string()]);
+
         let load = Load::from_decoded(fields.clone(), LoadSize::Double, completers);
-        
+
         // Verify completer values
         assert!(matches!(load.ordering, MemoryOrdering::Acquire));
         assert!(matches!(load.cache_hint, CacheHint::NonTemporal1));
         assert!(matches!(load.speculation, MemorySpeculation::Speculative));
-        
+
         // Test load with default completers
         let load = Load::from_decoded(fields.clone(), LoadSize::Double, None);
-        
+
         // Verify default values
         assert!(matches!(load.ordering, MemoryOrdering::None));
         assert!(matches!(load.cache_hint, CacheHint::Normal));
         assert!(matches!(load.speculation, MemorySpeculation::None));
-        
+
         // Test load with mixed completers
         let completers = Some(vec![
             "fence".to_string(),
             "".to_string(), // Empty completer should be ignored
             "nta".to_string(),
         ]);
-        
+
         let load = Load::from_decoded(fields, LoadSize::Double, completers);
-        
+
         // Verify mixed values
         assert!(matches!(load.ordering, MemoryOrdering::Fence));
         assert!(matches!(load.cache_hint, CacheHint::NonTemporalAll));
@@ -756,35 +791,32 @@ mod tests {
     #[test]
     fn test_store_completers() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test store with memory ordering completers
-        let completers = Some(vec![
-            "rel".to_string(),
-            "bias".to_string(),
-        ]);
-        
+        let completers = Some(vec!["rel".to_string(), "bias".to_string()]);
+
         let store = Store::from_decoded(fields.clone(), StoreSize::Double, completers);
-        
+
         // Verify completer values
         assert!(matches!(store.ordering, MemoryOrdering::Release));
         assert!(matches!(store.cache_hint, CacheHint::Bias));
-        
+
         // Test store with default completers
         let store = Store::from_decoded(fields.clone(), StoreSize::Double, None);
-        
+
         // Verify default values
         assert!(matches!(store.ordering, MemoryOrdering::None));
         assert!(matches!(store.cache_hint, CacheHint::Normal));
-        
+
         // Test store with mixed completers
         let completers = Some(vec![
             "fence".to_string(),
             "".to_string(), // Empty completer should be ignored
             "nt1".to_string(),
         ]);
-        
+
         let store = Store::from_decoded(fields, StoreSize::Double, completers);
-        
+
         // Verify mixed values
         assert!(matches!(store.ordering, MemoryOrdering::Fence));
         assert!(matches!(store.cache_hint, CacheHint::NonTemporal1));
@@ -794,41 +826,41 @@ mod tests {
     #[ignore = "ALAT speculation behavior needs to be fixed"]
     fn test_memory_speculation() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test advanced load
         let completers = Some(vec!["a".to_string()]);
         let load = Load::from_decoded(fields.clone(), LoadSize::Double, completers);
-        
+
         // Write test value to memory
         memory.write_u64(0x1000, 0x1234_5678_9ABC_DEF0).unwrap();
-        
+
         // Execute advanced load
         load.execute(&mut cpu, &mut memory).unwrap();
-        
+
         // Verify ALAT entry was created and value was loaded
         assert!(cpu.alat_check_register(2, true));
         assert_eq!(cpu.get_gr(2).unwrap(), 0x1234_5678_9ABC_DEF0);
-        
+
         // Test check load with clear
         let completers = Some(vec!["c.clr".to_string()]);
         let check_load = Load::from_decoded(fields.clone(), LoadSize::Double, completers);
-        
+
         // Execute check load
         check_load.execute(&mut cpu, &mut memory).unwrap();
-        
+
         // Verify ALAT entry was cleared
         assert!(!cpu.alat_check_register(2, true));
-        
+
         // Test check load with no clear
         let completers = Some(vec!["c.nc".to_string()]);
         let check_load = Load::from_decoded(fields, LoadSize::Double, completers);
-        
+
         // Add new ALAT entry
         cpu.alat_add_entry(0x1000, 8, 2, true).unwrap();
-        
+
         // Execute check load
         check_load.execute(&mut cpu, &mut memory).unwrap();
-        
+
         // Verify ALAT entry still exists
         assert!(cpu.alat_check_register(2, true));
     }
@@ -1039,35 +1071,38 @@ mod tests {
     #[test]
     fn test_semaphore_completers() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test semaphore with memory ordering completers
-        let completers = Some(vec![
-            "acq".to_string(),
-            "nt1".to_string(),
-        ]);
-        
-        let sem = Semaphore::from_decoded(fields.clone(), SemaphoreOp::Xchg, LoadSize::Double, completers);
-        
+        let completers = Some(vec!["acq".to_string(), "nt1".to_string()]);
+
+        let sem = Semaphore::from_decoded(
+            fields.clone(),
+            SemaphoreOp::Xchg,
+            LoadSize::Double,
+            completers,
+        );
+
         // Verify completer values
         assert!(matches!(sem.ordering, MemoryOrdering::Acquire));
         assert!(matches!(sem.cache_hint, CacheHint::NonTemporal1));
-        
+
         // Test semaphore with default completers
-        let sem = Semaphore::from_decoded(fields.clone(), SemaphoreOp::Xchg, LoadSize::Double, None);
-        
+        let sem =
+            Semaphore::from_decoded(fields.clone(), SemaphoreOp::Xchg, LoadSize::Double, None);
+
         // Verify default values
         assert!(matches!(sem.ordering, MemoryOrdering::None));
         assert!(matches!(sem.cache_hint, CacheHint::Normal));
-        
+
         // Test semaphore with mixed completers
         let completers = Some(vec![
             "rel".to_string(),
             "".to_string(), // Empty completer should be ignored
             "nta".to_string(),
         ]);
-        
+
         let sem = Semaphore::from_decoded(fields, SemaphoreOp::Xchg, LoadSize::Double, completers);
-        
+
         // Verify mixed values
         assert!(matches!(sem.ordering, MemoryOrdering::Release));
         assert!(matches!(sem.cache_hint, CacheHint::NonTemporalAll));
@@ -1104,31 +1139,29 @@ mod tests {
     #[test]
     fn test_prefetch_completers() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test prefetch with cache hint completers
-        let completers = Some(vec![
-            "nt1".to_string(),
-        ]);
-        
+        let completers = Some(vec!["nt1".to_string()]);
+
         let prefetch = Prefetch::from_decoded(fields.clone(), PrefetchType::Normal, completers);
-        
+
         // Verify completer values
         assert!(matches!(prefetch.cache_hint, CacheHint::NonTemporal1));
-        
+
         // Test prefetch with default completers
         let prefetch = Prefetch::from_decoded(fields.clone(), PrefetchType::Normal, None);
-        
+
         // Verify default values
         assert!(matches!(prefetch.cache_hint, CacheHint::Normal));
-        
+
         // Test prefetch with mixed completers
         let completers = Some(vec![
             "".to_string(), // Empty completer should be ignored
             "nta".to_string(),
         ]);
-        
+
         let prefetch = Prefetch::from_decoded(fields, PrefetchType::Normal, completers);
-        
+
         // Verify mixed values
         assert!(matches!(prefetch.cache_hint, CacheHint::NonTemporalAll));
     }
@@ -1161,4 +1194,4 @@ mod tests {
         let prefetch = Prefetch::new(fields.clone(), PrefetchType::Normal);
         prefetch.execute(&mut cpu, &mut memory).unwrap();
     }
-} 
+}

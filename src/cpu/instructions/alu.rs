@@ -1,11 +1,11 @@
 //! ALU (A-type) instruction implementations
-//! 
+//!
 //! This module implements the integer ALU instructions for the IA-64 architecture.
 
 use super::{Instruction, InstructionFields, RegisterType};
-use crate::EmulatorError;
 use crate::cpu::Cpu;
 use crate::memory::Memory;
+use crate::EmulatorError;
 
 /// Add instruction
 #[derive(Debug)]
@@ -30,12 +30,20 @@ impl Instruction for Add {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform addition
@@ -44,7 +52,11 @@ impl Instruction for Add {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -74,12 +86,20 @@ impl Instruction for Sub {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform subtraction
@@ -88,7 +108,11 @@ impl Instruction for Sub {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -118,12 +142,20 @@ impl Instruction for And {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform AND operation
@@ -132,7 +164,11 @@ impl Instruction for And {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -162,12 +198,20 @@ impl Instruction for Or {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform OR operation
@@ -176,7 +220,11 @@ impl Instruction for Or {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -206,12 +254,20 @@ impl Instruction for Xor {
         // Get source registers
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform XOR operation
@@ -220,7 +276,11 @@ impl Instruction for Xor {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -276,12 +336,20 @@ impl Instruction for Compare {
         // Get source values
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Evaluate condition
@@ -301,7 +369,11 @@ impl Instruction for Compare {
         // Set destination predicate register
         match self.fields.destinations[0] {
             RegisterType::PR(reg) => cpu.set_pr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -331,12 +403,20 @@ impl Instruction for TestBit {
         // Get source value and bit position
         let value = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let pos = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Test bit
@@ -349,7 +429,11 @@ impl Instruction for TestBit {
         // Set destination predicate register
         match self.fields.destinations[0] {
             RegisterType::PR(reg) => cpu.set_pr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -391,12 +475,20 @@ impl Instruction for Shift {
         // Get source value and shift amount
         let value = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let shift = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform shift operation
@@ -409,7 +501,11 @@ impl Instruction for Shift {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -439,29 +535,41 @@ impl Instruction for Deposit {
         // Get target and source values
         let target = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid target register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid target register type".to_string(),
+                ))
+            }
         };
 
         let source = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Get position and length from immediate field
         let immediate = self.fields.immediate.unwrap_or(0) as u64;
-        let pos = (immediate & 0xFF) as u32;         // Position is in bits 0-7
-        let len = ((immediate >> 8) & 0xFF) as u32;  // Length is in bits 8-15
+        let pos = (immediate & 0xFF) as u32; // Position is in bits 0-7
+        let len = ((immediate >> 8) & 0xFF) as u32; // Length is in bits 8-15
 
         // Create mask for the field
         let field_mask = ((1u64 << len) - 1) << pos;
-        
+
         // Clear the target bits and insert the source bits
         let result = (target & !field_mask) | ((source & ((1u64 << len) - 1)) << pos);
 
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -491,13 +599,17 @@ impl Instruction for Extract {
         // Get source value
         let source = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Get position and length from immediate field
         let immediate = self.fields.immediate.unwrap_or(0) as u64;
-        let pos = (immediate & 0xFF) as u32;         // Position is in bits 0-7
-        let len = ((immediate >> 8) & 0xFF) as u32;  // Length is in bits 8-15
+        let pos = (immediate & 0xFF) as u32; // Position is in bits 0-7
+        let len = ((immediate >> 8) & 0xFF) as u32; // Length is in bits 8-15
 
         // Extract the field by first shifting right to position 0, then masking
         let result = (source >> pos) & ((1u64 << len) - 1);
@@ -505,7 +617,11 @@ impl Instruction for Extract {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -535,7 +651,11 @@ impl Instruction for PopCount {
         // Get source value
         let source = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Count number of 1 bits
@@ -544,7 +664,11 @@ impl Instruction for PopCount {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -586,12 +710,20 @@ impl Instruction for ParallelAdd {
         // Get source values
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform parallel addition based on element size
@@ -605,7 +737,7 @@ impl Instruction for ParallelAdd {
                     result |= sum << (i * 8);
                 }
                 result
-            },
+            }
             ParallelSize::Half => {
                 let mut result = 0u64;
                 for i in 0..4 {
@@ -615,7 +747,7 @@ impl Instruction for ParallelAdd {
                     result |= sum << (i * 16);
                 }
                 result
-            },
+            }
             ParallelSize::Word => {
                 let mut result = 0u64;
                 for i in 0..2 {
@@ -625,13 +757,17 @@ impl Instruction for ParallelAdd {
                     result |= sum << (i * 32);
                 }
                 result
-            },
+            }
         };
 
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -662,12 +798,20 @@ impl Instruction for SaturatingAdd {
         // Get source values
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform saturating addition
@@ -683,7 +827,11 @@ impl Instruction for SaturatingAdd {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -713,25 +861,37 @@ impl Instruction for RotateMask {
         // Get source value and rotation amount
         let value = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let rot_amount = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid rotation register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid rotation register type".to_string(),
+                ))
+            }
         } as u32;
 
         // Get mask from immediate field
         let mask = self.fields.immediate.unwrap_or(0) as u64;
 
         // Perform rotation and masking
-        let rotated = value.rotate_left(rot_amount & 0x3F);  // Only use bottom 6 bits for rotation
+        let rotated = value.rotate_left(rot_amount & 0x3F); // Only use bottom 6 bits for rotation
         let result = rotated & mask;
 
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -775,12 +935,20 @@ impl Instruction for MinMax {
         // Get source values
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform min/max operation
@@ -791,18 +959,22 @@ impl Instruction for MinMax {
                 let s1 = src1 as i64;
                 let s2 = src2 as i64;
                 std::cmp::min(s1, s2) as u64
-            },
+            }
             MinMaxType::MaxS => {
                 let s1 = src1 as i64;
                 let s2 = src2 as i64;
                 std::cmp::max(s1, s2) as u64
-            },
+            }
         };
 
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -831,7 +1003,11 @@ pub struct Extend {
 impl Extend {
     /// Create new extension instruction
     pub fn new(fields: InstructionFields, size: ExtensionSize, sign_extend: bool) -> Self {
-        Self { fields, size, sign_extend }
+        Self {
+            fields,
+            size,
+            sign_extend,
+        }
     }
 }
 
@@ -845,7 +1021,11 @@ impl Instruction for Extend {
         // Get source value
         let src = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Perform extension
@@ -856,21 +1036,25 @@ impl Instruction for Extend {
             (ExtensionSize::Byte, true) => {
                 let val = (src & 0xFF) as i8;
                 val as i64 as u64
-            },
+            }
             (ExtensionSize::Half, true) => {
                 let val = (src & 0xFFFF) as i16;
                 val as i64 as u64
-            },
+            }
             (ExtensionSize::Word, true) => {
                 let val = (src & 0xFFFFFFFF) as i32;
                 val as i64 as u64
-            },
+            }
         };
 
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -900,12 +1084,20 @@ impl Instruction for Merge {
         // Get source values
         let src1 = match self.fields.sources[0] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         let src2 = match self.fields.sources[1] {
             RegisterType::GR(reg) => cpu.get_gr(reg as usize)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid source register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid source register type".to_string(),
+                ))
+            }
         };
 
         // Get merge mask from immediate field
@@ -917,7 +1109,11 @@ impl Instruction for Merge {
         // Write result to destination
         match self.fields.destinations[0] {
             RegisterType::GR(reg) => cpu.set_gr(reg as usize, result)?,
-            _ => return Err(EmulatorError::ExecutionError("Invalid destination register type".to_string())),
+            _ => {
+                return Err(EmulatorError::ExecutionError(
+                    "Invalid destination register type".to_string(),
+                ))
+            }
         }
 
         Ok(())
@@ -932,11 +1128,13 @@ mod tests {
     fn setup_test() -> (Cpu, Memory, InstructionFields) {
         let mut cpu = Cpu::new();
         let mut memory = Memory::new();
-        memory.map(0x1000, 4096, Permissions::ReadWriteExecute).unwrap();
-        
+        memory
+            .map(0x1000, 4096, Permissions::ReadWriteExecute)
+            .unwrap();
+
         // Initialize predicate registers
         cpu.set_pr(0, true).unwrap(); // Set p0 to true by default
-        
+
         let fields = InstructionFields {
             qp: 0,
             major_op: 0,
@@ -1058,19 +1256,19 @@ mod tests {
 
         // Test bit set
         cpu.set_gr(1, 0x8).unwrap(); // 1000 in binary
-        cpu.set_gr(2, 3).unwrap();   // Testing bit position 3
+        cpu.set_gr(2, 3).unwrap(); // Testing bit position 3
         tbit.execute(&mut cpu, &mut memory).unwrap();
         assert!(cpu.get_pr(1).unwrap());
 
         // Test bit clear
         cpu.set_gr(1, 0x8).unwrap(); // 1000 in binary
-        cpu.set_gr(2, 2).unwrap();   // Testing bit position 2
+        cpu.set_gr(2, 2).unwrap(); // Testing bit position 2
         tbit.execute(&mut cpu, &mut memory).unwrap();
         assert!(!cpu.get_pr(1).unwrap());
 
         // Test invalid bit position
         cpu.set_gr(1, 0x8).unwrap();
-        cpu.set_gr(2, 64).unwrap();  // Invalid bit position
+        cpu.set_gr(2, 64).unwrap(); // Invalid bit position
         tbit.execute(&mut cpu, &mut memory).unwrap();
         assert!(!cpu.get_pr(1).unwrap());
     }
@@ -1082,7 +1280,7 @@ mod tests {
 
         // Set predicate register to false
         cpu.set_pr(0, false).unwrap();
-        
+
         // Set up registers
         cpu.set_gr(1, 5).unwrap();
         cpu.set_gr(2, 3).unwrap();
@@ -1103,7 +1301,7 @@ mod tests {
     #[test]
     fn test_shift() {
         let (mut cpu, mut memory, mut fields) = setup_test();
-        
+
         // Test left shift
         let shift_left = Shift::new(fields.clone(), ShiftType::Left);
         cpu.set_gr(1, 0x1).unwrap();
@@ -1132,7 +1330,7 @@ mod tests {
         let (mut cpu, mut memory, mut fields) = setup_test();
         // Position 8, length 8 (0x0808)
         fields.immediate = Some(0x0808);
-        
+
         let deposit = Deposit::new(fields);
         cpu.set_gr(1, 0xFFFFFFFFFFFFFFFF).unwrap();
         cpu.set_gr(2, 0xAB).unwrap();
@@ -1146,7 +1344,7 @@ mod tests {
         let (mut cpu, mut memory, mut fields) = setup_test();
         // Position 8, length 8 (0x0808)
         fields.immediate = Some(0x0808);
-        
+
         let extract = Extract::new(fields);
         cpu.set_gr(1, 0xFFFFFFFFFFABFFFF).unwrap();
         extract.execute(&mut cpu, &mut memory).unwrap();
@@ -1156,7 +1354,7 @@ mod tests {
     #[test]
     fn test_popcount() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         let popcount = PopCount::new(fields);
         cpu.set_gr(1, 0x1234567890ABCDEF).unwrap();
         popcount.execute(&mut cpu, &mut memory).unwrap();
@@ -1166,7 +1364,7 @@ mod tests {
     #[test]
     fn test_parallel_add() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test byte parallel add
         let padd_byte = ParallelAdd::new(fields.clone(), ParallelSize::Byte);
         cpu.set_gr(1, 0x0102030405060708).unwrap();
@@ -1185,7 +1383,7 @@ mod tests {
     #[test]
     fn test_saturating_add() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test unsigned saturating add
         let sadd_u = SaturatingAdd::new(fields.clone(), false);
         cpu.set_gr(1, u64::MAX - 1).unwrap();
@@ -1206,7 +1404,7 @@ mod tests {
     fn test_rotate_mask() {
         let (mut cpu, mut memory, mut fields) = setup_test();
         fields.immediate = Some(0xFF00FF00FF00FF00u64 as i64);
-        
+
         let rotmask = RotateMask::new(fields);
         cpu.set_gr(1, 0x1234567890ABCDEF).unwrap();
         cpu.set_gr(2, 8).unwrap(); // Rotate by 8 bits
@@ -1217,7 +1415,7 @@ mod tests {
     #[test]
     fn test_minmax() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test unsigned minimum
         let min_u = MinMax::new(fields.clone(), MinMaxType::MinU);
         cpu.set_gr(1, 5).unwrap();
@@ -1244,7 +1442,7 @@ mod tests {
     #[ignore]
     fn test_extend() {
         let (mut cpu, mut memory, fields) = setup_test();
-        
+
         // Test zero extension
         let zext_byte = Extend::new(fields.clone(), ExtensionSize::Byte, false);
         cpu.set_gr(1, 0xFF80).unwrap();
@@ -1269,11 +1467,11 @@ mod tests {
     fn test_merge() {
         let (mut cpu, mut memory, mut fields) = setup_test();
         fields.immediate = Some(0xF0F0F0F0F0F0F0F0u64 as i64);
-        
+
         let merge = Merge::new(fields);
         cpu.set_gr(1, 0xAAAAAAAAAAAAAAAA).unwrap();
         cpu.set_gr(2, 0x5555555555555555).unwrap();
         merge.execute(&mut cpu, &mut memory).unwrap();
         assert_eq!(cpu.get_gr(3).unwrap(), 0xA5A5A5A5A5A5A5A5);
     }
-} 
+}

@@ -18,7 +18,7 @@ impl RegionFields {
     /// Create from raw bits
     pub fn from_bits(bits: u64) -> Self {
         Self {
-            rid: bits & 0xFFFF_FFFF_FFFF_FFFF,
+            rid: bits,
             ps: ((bits >> 56) & 0xFF) as u8,
             ve: (bits >> 63) != 0,
         }
@@ -26,9 +26,7 @@ impl RegionFields {
 
     /// Convert to raw bits
     pub fn to_bits(&self) -> u64 {
-        self.rid |
-        ((self.ps as u64) << 56) |
-        ((self.ve as u64) << 63)
+        self.rid | ((self.ps as u64) << 56) | ((self.ve as u64) << 63)
     }
 }
 
@@ -39,20 +37,25 @@ pub struct RRFile {
     regs: [u64; NUM_RR],
 }
 
+impl Default for RRFile {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RRFile {
     /// Create new register file
     pub fn new() -> Self {
-        Self {
-            regs: [0; NUM_RR],
-        }
+        Self { regs: [0; NUM_RR] }
     }
 
     /// Read register value
     pub fn read(&self, index: usize) -> Result<RegionFields, EmulatorError> {
         if index >= NUM_RR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid region register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid region register index: {}",
+                index
+            )));
         }
         Ok(RegionFields::from_bits(self.regs[index]))
     }
@@ -60,9 +63,10 @@ impl RRFile {
     /// Write register value
     pub fn write(&mut self, index: usize, fields: RegionFields) -> Result<(), EmulatorError> {
         if index >= NUM_RR {
-            return Err(EmulatorError::RegisterError(
-                format!("Invalid region register index: {}", index)
-            ));
+            return Err(EmulatorError::RegisterError(format!(
+                "Invalid region register index: {}",
+                index
+            )));
         }
         self.regs[index] = fields.to_bits();
         Ok(())
@@ -103,4 +107,4 @@ impl RRFile {
         fields.rid = rid;
         self.write(index, fields)
     }
-} 
+}
