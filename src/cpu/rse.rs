@@ -283,10 +283,7 @@ impl RSE {
     }
 
     /// Flush dirty registers
-    pub fn flush(
-        &mut self,
-        memory: &mut Memory,
-    ) -> Result<(), EmulatorError> {
+    pub fn flush(&mut self, memory: &mut Memory) -> Result<(), EmulatorError> {
         self.spill_registers(memory, self.dirty_count)
     }
 

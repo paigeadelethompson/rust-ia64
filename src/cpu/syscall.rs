@@ -176,7 +176,8 @@ impl SyscallContext {
 }
 
 /// Type alias for syscall handler function
-type SyscallHandler = Box<dyn Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + Send + Sync>;
+type SyscallHandler =
+    Box<dyn Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + Send + Sync>;
 
 /// Syscall handler registry
 #[derive(Default)]
