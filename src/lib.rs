@@ -18,7 +18,8 @@
 //! example of using the emulator:
 //!
 //! ```rust,no_run
-//! use rust_ia64::{Cpu, Memory};
+//! use rust_ia64::cpu::Cpu;
+//! use rust_ia64::memory::Memory;
 //!
 //! let mut cpu = Cpu::new();
 //! let mut memory = Memory::new();
