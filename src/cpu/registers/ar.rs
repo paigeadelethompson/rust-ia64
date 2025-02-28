@@ -103,15 +103,19 @@ impl AR {
     /// Try to create from raw bits
     pub fn from_bits(bits: u8) -> Option<Self> {
         match bits {
-            0..=7 => Some(unsafe { std::mem::transmute(bits) }),
-            16..=19 => Some(unsafe { std::mem::transmute(bits) }),
+            // SAFETY: These transmutes are safe because:
+            // 1. The bit patterns are validated by the match arms
+            // 2. The enum variants are repr(u64) and can hold these values
+            // 3. The ranges are non-overlapping and exhaustive
+            0..=7 => Some(unsafe { std::mem::transmute::<u8, AR>(bits) }),
+            16..=19 => Some(unsafe { std::mem::transmute::<u8, AR>(bits) }),
             32 => Some(Self::CCV),
             36 => Some(Self::UNAT),
             40 => Some(Self::FPSR),
             44 => Some(Self::ITC),
-            64..=81 => Some(unsafe { std::mem::transmute(bits) }),
-            88..=95 => Some(unsafe { std::mem::transmute(bits) }),
-            96..=100 => Some(unsafe { std::mem::transmute(bits) }),
+            64..=81 => Some(unsafe { std::mem::transmute::<u8, AR>(bits) }),
+            88..=95 => Some(unsafe { std::mem::transmute::<u8, AR>(bits) }),
+            96..=100 => Some(unsafe { std::mem::transmute::<u8, AR>(bits) }),
             _ => None,
         }
     }

@@ -1,4 +1,4 @@
-/// IA-64 instruction format definitions
+//! IA-64 instruction format definitions
 
 /// A-type instruction format (ALU)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

@@ -68,9 +68,11 @@ impl MoveFromPsr {
     }
 }
 
-/// Return from interrupt instruction
+/// Return from interruption instruction
 #[derive(Debug)]
 pub struct Rfi {
+    #[allow(dead_code)]
+    /// Instruction fields
     fields: InstructionFields,
 }
 
@@ -95,9 +97,11 @@ impl Rfi {
     }
 }
 
-/// Break instruction (software interrupt)
+/// Break instruction
 #[derive(Debug)]
 pub struct Break {
+    #[allow(dead_code)]
+    /// Instruction fields
     fields: InstructionFields,
 }
 

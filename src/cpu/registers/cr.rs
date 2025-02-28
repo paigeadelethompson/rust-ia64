@@ -68,12 +68,16 @@ impl CRIndex {
     /// Try to create from raw bits
     pub fn from_bits(bits: u8) -> Option<Self> {
         match bits {
-            0..=2 => Some(unsafe { std::mem::transmute(bits) }),
+            // SAFETY: These transmutes are safe because:
+            // 1. The bit patterns are validated by the match arms
+            // 2. The enum variants are repr(u64) and can hold these values
+            // 3. The ranges are non-overlapping and exhaustive
+            0..=2 => Some(unsafe { std::mem::transmute::<u8, CRIndex>(bits) }),
             8 => Some(Self::PTA),
-            16..=27 => Some(unsafe { std::mem::transmute(bits) }),
-            64..=69 => Some(unsafe { std::mem::transmute(bits) }),
-            72..=74 => Some(unsafe { std::mem::transmute(bits) }),
-            80..=81 => Some(unsafe { std::mem::transmute(bits) }),
+            16..=27 => Some(unsafe { std::mem::transmute::<u8, CRIndex>(bits) }),
+            64..=69 => Some(unsafe { std::mem::transmute::<u8, CRIndex>(bits) }),
+            72..=74 => Some(unsafe { std::mem::transmute::<u8, CRIndex>(bits) }),
+            80..=81 => Some(unsafe { std::mem::transmute::<u8, CRIndex>(bits) }),
             _ => None,
         }
     }

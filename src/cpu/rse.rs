@@ -6,9 +6,11 @@
 use crate::memory::Memory;
 use crate::EmulatorError;
 
+#[allow(dead_code)]
 /// Size of each register frame in bytes (512 bytes = 64 registers * 8 bytes)
 const FRAME_SIZE: u64 = 512;
 
+#[allow(dead_code)]
 /// Maximum number of dirty registers before forced spill
 const MAX_DIRTY_REGS: u32 = 48;
 
@@ -23,46 +25,46 @@ pub struct FrameInfo {
     pub base: u32,
 }
 
-/// Backing store state
-#[derive(Debug)]
+#[allow(dead_code)]
+/// Backing store for register stack
 struct BackingStore {
-    /// Base address of backing store
+    /// Base address
     base: u64,
-    /// Current top of backing store
-    top: u64,
-    /// Store limit
-    limit: u64,
+    /// Size in bytes
+    size: u64,
+    /// Current offset
+    offset: u64,
 }
 
+#[allow(dead_code)]
 impl BackingStore {
     /// Create new backing store
     fn new(base: u64, size: u64) -> Self {
         Self {
             base,
-            top: base,
-            limit: base + size,
+            size,
+            offset: 0,
         }
     }
 
-    /// Check if store is full
+    /// Check if backing store is full
     fn is_full(&self) -> bool {
-        self.top >= self.limit
+        self.offset >= self.size
     }
 
-    /// Get available space
+    /// Get available space in bytes
     fn available_space(&self) -> u64 {
-        self.limit - self.top
+        self.size - self.offset
     }
 
-    /// Advance top pointer
+    /// Advance offset
     fn advance(&mut self, size: u64) -> Result<(), EmulatorError> {
-        let new_top = self.top + size;
-        if new_top > self.limit {
+        if self.offset + size > self.size {
             return Err(EmulatorError::ExecutionError(
                 "Backing store overflow".to_string(),
             ));
         }
-        self.top = new_top;
+        self.offset += size;
         Ok(())
     }
 }

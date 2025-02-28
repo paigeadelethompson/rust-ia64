@@ -103,11 +103,13 @@ impl CacheLine {
         }
     }
 
+    #[allow(dead_code)]
     /// Check if line is dirty (modified)
     fn is_dirty(&self) -> bool {
         self.state == CacheLineState::Modified
     }
 
+    #[allow(dead_code)]
     /// Write back dirty line to memory
     fn write_back(&mut self, memory: &mut Memory, addr: u64) -> Result<(), EmulatorError> {
         if self.is_dirty() {
@@ -125,6 +127,7 @@ struct CacheSet {
     lines: Vec<CacheLine>,
     /// Access counter for LRU
     access_counter: u64,
+    #[allow(dead_code)]
     /// Set index
     index: usize,
 }
@@ -205,10 +208,13 @@ pub enum CacheHint {
 struct CacheLevel {
     /// Sets in the cache
     sets: Vec<CacheSet>,
+    #[allow(dead_code)]
     /// Number of sets
     num_sets: usize,
+    #[allow(dead_code)]
     /// Set associativity
     associativity: usize,
+    #[allow(dead_code)]
     /// Line size in bytes
     line_size: usize,
     /// Line size bits for address decomposition
@@ -217,6 +223,7 @@ struct CacheLevel {
     set_bits: u32,
     /// Non-temporal hint active
     non_temporal: bool,
+    #[allow(dead_code)]
     /// Write policy
     write_policy: WritePolicy,
 }
@@ -252,16 +259,19 @@ impl CacheLevel {
         (tag << (self.line_bits + self.set_bits)) | ((set_idx as u64) << self.line_bits)
     }
 
+    #[allow(dead_code)]
     fn get_set_index(&self, addr: u64) -> usize {
         let (_, set_idx, _) = self.decompose_address(addr);
         set_idx
     }
 
+    #[allow(dead_code)]
     fn get_tag(&self, addr: u64) -> u64 {
         let (tag, _, _) = self.decompose_address(addr);
         tag
     }
 
+    #[allow(dead_code)]
     fn get_offset(&self, addr: u64) -> usize {
         let (_, _, offset) = self.decompose_address(addr);
         offset
@@ -284,6 +294,7 @@ impl CacheLevel {
         }
     }
 
+    #[allow(dead_code)]
     /// Write data to cache
     fn write(&mut self, addr: u64, data: &[u8]) {
         let (_old_addr, old_data) = self.write_to_cache(addr, data);
@@ -543,8 +554,8 @@ impl Memory {
     /// Write 64-bit value to memory
     pub fn write_u64(&mut self, addr: u64, value: u64) -> Result<(), EmulatorError> {
         let mut data = [0u8; 8];
-        for i in 0..8 {
-            data[i] = ((value >> (i * 8)) & 0xFF) as u8;
+        for (i, byte) in data.iter_mut().enumerate() {
+            *byte = ((value >> (i * 8)) & 0xFF) as u8;
         }
         self.write_to_caches(addr, &data)
     }
@@ -740,10 +751,12 @@ impl Memory {
         Ok(())
     }
 
+    #[allow(dead_code)]
     fn write(&mut self, addr: u64, data: &[u8]) -> Result<(), EmulatorError> {
         self.write_to_caches(addr, data)
     }
 
+    #[allow(dead_code)]
     fn flush_cache(&mut self, level: &mut CacheLevel) -> Result<(), EmulatorError> {
         let dirty_lines = level.flush();
         for (addr, data) in dirty_lines {
@@ -799,10 +812,12 @@ pub enum SpeculativeStatus {
 struct SpeculativeLoad {
     /// Memory address
     addr: u64,
+    #[allow(dead_code)]
     /// Size in bytes
     size: usize,
     /// Status of the load
     status: SpeculativeStatus,
+    #[allow(dead_code)]
     /// Data loaded (if successful)
     data: Vec<u8>,
 }

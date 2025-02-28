@@ -175,57 +175,44 @@ impl SyscallContext {
     }
 }
 
-/// System call handler type
-type SyscallHandler = fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError>;
+/// Type alias for syscall handler function
+type SyscallHandler = Box<dyn Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + Send + Sync>;
 
-/// System call table
-#[derive(Debug)]
-pub struct SyscallTable {
-    /// Handler functions indexed by system call number
-    handlers: Vec<Option<SyscallHandler>>,
+/// Syscall handler registry
+#[derive(Default)]
+pub struct SyscallRegistry {
+    /// Registered syscall handlers
+    handlers: HashMap<SyscallNumber, SyscallHandler>,
 }
 
-impl Default for SyscallTable {
-    fn default() -> Self {
-        Self::new()
+impl std::fmt::Debug for SyscallRegistry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SyscallRegistry")
+            .field("handlers", &format!("<{} handlers>", self.handlers.len()))
+            .finish()
     }
 }
 
-impl SyscallTable {
-    /// Create new system call table
+impl SyscallRegistry {
+    /// Create new syscall registry
     pub fn new() -> Self {
-        let mut handlers = Vec::with_capacity(256);
-        for _ in 0..256 {
-            handlers.push(None);
-        }
-        Self { handlers }
+        Self::default()
     }
 
-    /// Register system call handler
-    pub fn register_handler(&mut self, number: SyscallNumber, handler: SyscallHandler) {
-        let idx = number as usize;
-        if idx < self.handlers.len() {
-            self.handlers[idx] = Some(handler);
-        }
+    /// Register a syscall handler
+    pub fn register(&mut self, number: SyscallNumber, handler: SyscallHandler) {
+        self.handlers.insert(number, handler);
     }
 
-    /// Get handler for system call
-    pub fn get_handler(&self, number: SyscallNumber) -> Option<SyscallHandler> {
-        let idx = number as usize;
-        if idx < self.handlers.len() {
-            self.handlers[idx]
-        } else {
-            None
-        }
+    /// Get a syscall handler
+    pub fn get(&self, number: SyscallNumber) -> Option<&SyscallHandler> {
+        self.handlers.get(&number)
     }
 }
 
 /// System call manager
 pub struct SyscallManager {
-    handlers: HashMap<
-        SyscallNumber,
-        Box<dyn Fn(&mut Cpu, &mut SyscallContext) -> Result<(), EmulatorError> + Send + Sync>,
-    >,
+    handlers: HashMap<SyscallNumber, SyscallHandler>,
     pub(crate) current: Option<SyscallContext>,
 }
 
