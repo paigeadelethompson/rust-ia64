@@ -1,7 +1,43 @@
-//! Rust IA-64 Emulator
+//! # Rust IA-64 Emulator
 //!
-//! This library provides emulation of the Intel IA-64 (Itanium) architecture.
-//! It includes CPU state management, memory management, and instruction decoding/execution.
+//! This is an emulator for the Intel Itanium (IA-64) architecture written in Rust.
+//! The emulator aims to provide accurate emulation of IA-64 instructions and system
+//! behavior.
+//!
+//! ## Features
+//!
+//! - Full IA-64 instruction set emulation
+//! - Register stack engine (RSE)
+//! - Memory management and caching
+//! - System call handling
+//! - Basic I/O operations
+//!
+//! ## Usage
+//!
+//! The emulator can be used as a library or as a standalone binary. Here's a basic
+//! example of using the emulator:
+//!
+//! ```rust,no_run
+//! use rust_ia64::{Cpu, Memory};
+//!
+//! let mut cpu = Cpu::new();
+//! let mut memory = Memory::new();
+//!
+//! // Load program into memory...
+//! // Execute program...
+//! ```
+//!
+//! ## Architecture
+//!
+//! The emulator is organized into several main components:
+//!
+//! - CPU core (`cpu` module)
+//! - Memory management (`memory` module)
+//! - Instruction decoder (`decoder` module)
+//! - System call interface (`syscall` module)
+//!
+//! Each component is designed to be modular and testable, allowing for easy
+//! maintenance and extension of functionality.
 
 #![deny(missing_docs)]
 

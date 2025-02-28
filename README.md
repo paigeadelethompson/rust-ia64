@@ -1,4 +1,4 @@
-# Rust IA-64 Emulator
+# (WIP) Rust IA-64 Emulator
 
 A Rust-based emulator for the Intel IA-64 (Itanium) architecture. This project aims to provide a clean, efficient, and accurate emulation of the IA-64 instruction set and hardware features.
 
