@@ -1,0 +1,6 @@
+[package]
+name = "rust-ia64"
+version = "0.1.0"
+edition = "2021"
+authors = ["Paige Thompson"]
+description = "An Intel IA-64 (Itanium) architecture emulator written in Rust"
