@@ -286,8 +286,8 @@ impl CacheLevel {
 
     /// Write data to cache
     fn write(&mut self, addr: u64, data: &[u8]) {
-        let (old_addr, old_data) = self.write_to_cache(addr, data);
-        if let Some(old_data) = old_data {
+        let (_old_addr, old_data) = self.write_to_cache(addr, data);
+        if let Some(_old_data) = old_data {
             // Write back to memory will be handled by the caller
             // This avoids the need for a mutable reference to Memory
             // and simplifies the borrowing rules
@@ -632,7 +632,7 @@ impl Memory {
                 self.speculative_loads.push(load);
                 Ok(SpeculativeStatus::Success)
             }
-            Err(e) => {
+            Err(_e) => {
                 // Load failed - track failure
                 let load = SpeculativeLoad {
                     addr,

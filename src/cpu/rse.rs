@@ -218,7 +218,7 @@ impl RSE {
     /// Spill registers to backing store
     pub fn spill_registers(
         &mut self,
-        memory: &mut Memory,
+        _memory: &mut Memory,
         count: u32,
     ) -> Result<(), EmulatorError> {
         if count > self.dirty_count {
@@ -229,11 +229,11 @@ impl RSE {
 
         for _ in 0..count {
             // Write register value to memory
-            memory.write_u64(self.bspstore, 0)?; // TODO: Get actual register value
+            _memory.write_u64(self.bspstore, 0)?; // TODO: Get actual register value
 
             // Update RNAT if needed
             if (self.bspstore >> 3) & 0x3F == 0x3F {
-                memory.write_u64(self.bspstore + 8, self.rnat)?;
+                _memory.write_u64(self.bspstore + 8, self.rnat)?;
                 self.bspstore += 16;
             } else {
                 self.bspstore += 8;
@@ -247,7 +247,11 @@ impl RSE {
     }
 
     /// Fill registers from backing store
-    pub fn fill_registers(&mut self, memory: &mut Memory, count: u32) -> Result<(), EmulatorError> {
+    pub fn fill_registers(
+        &mut self,
+        _memory: &mut Memory,
+        count: u32,
+    ) -> Result<(), EmulatorError> {
         if count > self.invalid_count {
             return Err(EmulatorError::RSEError(
                 "Not enough invalid registers to fill".to_string(),
@@ -256,14 +260,14 @@ impl RSE {
 
         for _ in 0..count {
             // Read register value from memory
-            let value = memory.read_u64(self.bsp)?;
+            let _value = _memory.read_u64(self.bsp)?;
 
             // Check if we need to read RNAT
-            let nat_bit = (self.rnat >> ((self.bsp >> 3) & 0x3F)) & 1 != 0;
+            let _nat_bit = (self.rnat >> ((self.bsp >> 3) & 0x3F)) & 1 != 0;
 
             // Update BSP
             if (self.bsp >> 3) & 0x3F == 0x3F {
-                self.rnat = memory.read_u64(self.bsp + 8)?;
+                self.rnat = _memory.read_u64(self.bsp + 8)?;
                 self.bsp += 16;
             } else {
                 self.bsp += 8;
@@ -277,7 +281,10 @@ impl RSE {
     }
 
     /// Flush dirty registers
-    pub fn flush(&mut self, memory: &mut Memory) -> Result<(), EmulatorError> {
+    pub fn flush(
+        &mut self,
+        memory: &mut Memory,
+    ) -> Result<(), EmulatorError> {
         self.spill_registers(memory, self.dirty_count)
     }
 
@@ -290,7 +297,7 @@ impl RSE {
     /// Handle register allocation
     pub fn allocate_registers(
         &mut self,
-        memory: &mut Memory,
+        _memory: &mut Memory,
         count: u32,
     ) -> Result<(), EmulatorError> {
         // First, try to use clean registers
