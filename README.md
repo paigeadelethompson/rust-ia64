@@ -1,81 +1,92 @@
-# (WIP) Rust IA-64 Emulator
+# Rust IA-64 Emulator
 
-A Rust-based emulator for the Intel IA-64 (Itanium) architecture. This project aims to provide a clean, efficient, and accurate emulation of the IA-64 instruction set and hardware features.
+[![CI](https://github.com/iampaigeat/rust-ia64/actions/workflows/ci.yml/badge.svg)](https://github.com/iampaigeat/rust-ia64/actions/workflows/ci.yml)
+[![Documentation](https://github.com/iampaigeat/rust-ia64/actions/workflows/docs.yml/badge.svg)](https://iampaigeat.github.io/rust-ia64/)
+
+An emulator for the Intel Itanium (IA-64) architecture written in Rust. This project aims to provide accurate emulation of IA-64 instructions and system behavior.
 
 ## Features
 
-- IA-64 CPU state emulation including:
-  - 128 General Purpose Registers (GR)
-  - 128 Floating Point Registers (FR)
-  - 64 Predicate Registers (PR)
-  - 8 Branch Registers (BR)
-  - Processor Status Register (PSR)
-- Memory management with:
-  - Flexible memory mapping
-  - Permission control (read/write/execute)
-  - 64-bit address space support
-- Instruction decoding:
-  - EPIC (Explicitly Parallel Instruction Computing) bundle format
-  - Multiple instruction types (A, I, M, F, B, L)
-  - Template-based parallel execution support
+- Full IA-64 instruction set emulation
+- Register stack engine (RSE)
+- Memory management and caching
+- System call handling
+- Basic I/O operations
 
-## Building
+## Installation
 
-To build the project, you'll need Rust and Cargo installed. Then run:
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rust-ia64 = { git = "https://github.com/iampaigeat/rust-ia64" }
+```
+
+## Usage
+
+Here's a basic example of using the emulator:
+
+```rust
+use rust_ia64::{Cpu, Memory};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cpu = Cpu::new();
+    let mut memory = Memory::new();
+
+    // Load program into memory...
+    // Execute program...
+
+    Ok(())
+}
+```
+
+For more examples and detailed documentation, please visit our [documentation page](https://iampaigeat.github.io/rust-ia64/).
+
+## Development
+
+### Prerequisites
+
+- Rust 1.70.0 or later
+- Cargo
+
+### Building
 
 ```bash
 cargo build
 ```
 
-For optimized release builds:
-
-```bash
-cargo build --release
-```
-
-## Testing
-
-Run the test suite with:
+### Testing
 
 ```bash
 cargo test
 ```
 
-## Usage
+### Linting and Formatting
 
-The emulator can be used as a library in your Rust projects:
+```bash
+# Run clippy
+cargo clippy
 
-```rust
-use rust_ia64::{cpu::Cpu, memory::Memory};
-
-fn main() {
-    // Create CPU and memory instances
-    let mut cpu = Cpu::new();
-    let mut memory = Memory::new();
-    
-    // Map some memory
-    memory.map(0x1000, 4096, Default::default()).unwrap();
-    
-    // Your emulation code here...
-}
+# Format code
+cargo fmt
 ```
 
 ## Project Structure
 
-- `src/cpu/`: CPU state and instruction execution
-- `src/memory/`: Memory management implementation
-- `src/decoder/`: Instruction decoding logic
-- `src/tests/`: Test suite
+- `src/cpu/` - CPU core implementation
+- `src/memory/` - Memory management
+- `src/decoder/` - Instruction decoder
+- `src/cpu/instructions/` - Instruction implementations
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit pull requests.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## References
+## Acknowledgments
 
-- Intel Itanium Architecture Software Developer's Manual
-- [IA-64 Application Developer's Architecture Guide](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html) 
+- Intel® Itanium® Architecture Software Developer's Manual
+- Rust community and contributors 
